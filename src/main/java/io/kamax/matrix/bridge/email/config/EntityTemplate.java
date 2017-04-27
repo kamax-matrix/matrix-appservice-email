@@ -18,30 +18,37 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.matrix.bridge.email.config;
 
-buildscript {
-    repositories {
-        mavenCentral()
+import org.springframework.stereotype.Component;
+
+@Component
+public class EntityTemplate {
+
+    private boolean exclusive;
+    private String template;
+
+    public boolean isExclusive() {
+        return exclusive;
     }
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.3.RELEASE'
+    public void setExclusive(boolean exclusive) {
+        this.exclusive = exclusive;
     }
-}
 
-repositories {
-    mavenCentral()
-}
+    public String getTemplate() {
+        return template;
+    }
 
-dependencies {
-    compile project(':matrix-java-sdk')
+    public void setTemplate(String template) {
+        this.template = template;
+    }
 
-    // Spring Boot - standalone app
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.3.RELEASE'
-
-    compile 'commons-lang:commons-lang:2.6'
-
-    testCompile 'junit:junit:4.12'
+    @Override
+    public String toString() {
+        return "EntityPattern{" +
+                "exclusive=" + exclusive +
+                ", template='" + template + '\'' +
+                '}';
+    }
 }

@@ -1,2 +1,41 @@
 server:
   port: 8091
+
+# HS configuration
+homeserver:
+  # Domain for which this homeserver is authoritative
+  domain: "example.org"
+
+  # Host that will be used when connecting to endpoints for this HS.
+  # If this value is commented out or empty, the domain will be used.
+  host: ""
+
+  # The token used by the AS when communicating with the HS
+  asToken: "MY_SECRET_AS_TOKEN"
+
+  # The token used by the HS when communicating with the AS
+  hsToken: "MY_SECRET_HS_TOKEN"
+
+  # The localpart of the AS global user. The domain will always be the one of the HS
+  localpart: "appservice-email"
+
+  # A list of localpart templates used to generate virtual MXID and produce a regexp for the HS config.
+  #
+  # Values that will be replaced
+  users:
+      # If this pattern is exclusive, used to generate HS config
+    - exclusive: true
+
+      # Values that will be replaced:
+      #
+      # %EMAIL%:
+      #   - Will be replaced by the full e-mail address, after doing a transform on the invalid MXID characters
+      #   - Will be replaced by "*" in the generated HS config
+      template: "email_%EMAIL%"
+
+
+  # Patterns of Room IDs
+  ids: []
+
+  # Patterns of Room aliases
+  aliases: []

@@ -20,5 +20,19 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import io.kamax.matrix.ThreePid;
+import io.kamax.matrix.ThreePidMapping;
+
+import java.util.Optional;
+
 public interface _MatrixEmailBridge {
+
+    Optional<ThreePidMapping> getMatrixId(ThreePid threePid);
+
+    void queryUser(UserQuery query);
+
+    void queryRoom(RoomQuery query);
+
+    void push(MatrixTransactionPush transaction);
+
 }

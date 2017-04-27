@@ -4,3 +4,6 @@ build/
 
 # Intellij IDEA
 .idea/
+
+# Generated files
+registration.yaml

@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.controller;
 
+import io.kamax.matrix.bridge.email.model.MatrixTransactionPush;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -37,7 +38,7 @@ public class ApplicationServiceController {
 
     @RequestMapping(value = "/rooms/{roomAlias}", method = GET)
     public void getRoom(
-            @RequestParam(name = "hs_token") String accessToken,
+            @RequestParam(name = "access_token") String accessToken,
             @PathVariable String roomAlias,
             HttpServletResponse response) {
         log.warn("Room {} was requested by HS but we don't handle any virtual room", roomAlias);
@@ -47,7 +48,7 @@ public class ApplicationServiceController {
 
     @RequestMapping(value = "/users/{mxId}", method = GET)
     public void getUser(
-            @RequestParam(name = "hs_token") String accessToken,
+            @RequestParam(name = "access_token") String accessToken,
             @PathVariable String mxId,
             HttpServletResponse response) {
         log.info("User {} was requested by HS", mxId);
@@ -57,9 +58,9 @@ public class ApplicationServiceController {
 
     @RequestMapping(value = "/transactions/{txnId}", method = PUT)
     public Object getTransaction(
-            @RequestParam(name = "hs_token") String accessToken,
+            @RequestParam(name = "access_token") String accessToken,
             @PathVariable String txnId,
-            @RequestBody MatrixTransaction data) {
+            @RequestBody MatrixTransactionPush data) {
         log.info("We got data: {}", data.getEvents());
 
         return "{}";

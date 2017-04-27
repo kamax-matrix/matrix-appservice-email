@@ -1,0 +1,11 @@
+id: "appservice-email"
+url: "http://localhost:8091"
+as_token: "MY_SECRET_AS_TOKEN"
+hs_token: "MY_SECRET_HS_TOKEN"
+sender_localpart: "appservice-email"
+namespaces:
+  users:
+    - regex: "@email_*"
+      exclusive: true
+  aliases: []
+  rooms: []

@@ -18,30 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.matrix.bridge.email.exception;
 
-buildscript {
-    repositories {
-        mavenCentral()
+public class InvalidHomeserverTokenException extends MatrixException {
+
+    @Override
+    public String getErrorCode() {
+        return "M_FORBIDDEN";
     }
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.3.RELEASE'
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    compile project(':matrix-java-sdk')
-
-    // Spring Boot - standalone app
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.3.RELEASE'
-
-    compile 'commons-lang:commons-lang:2.6'
-
-    testCompile 'junit:junit:4.12'
 }

@@ -18,30 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-apply plugin: 'java'
-apply plugin: 'org.springframework.boot'
+package io.kamax.matrix.bridge.email.exception;
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
+public abstract class MatrixException extends RuntimeException {
 
-    dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.3.RELEASE'
-    }
-}
+    public abstract String getErrorCode();
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    compile project(':matrix-java-sdk')
-
-    // Spring Boot - standalone app
-    compile 'org.springframework.boot:spring-boot-starter-web:1.5.3.RELEASE'
-
-    compile 'commons-lang:commons-lang:2.6'
-
-    testCompile 'junit:junit:4.12'
 }
