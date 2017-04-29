@@ -22,16 +22,22 @@ package io.kamax.matrix.bridge.email.model;
 
 import io.kamax.matrix.ThreePid;
 import io.kamax.matrix.ThreePidMapping;
+import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.bridge.email.exception.InvalidMatrixIdException;
+import io.kamax.matrix.bridge.email.exception.RoomNotFoundException;
+import io.kamax.matrix.bridge.email.exception.UserNotFoundException;
 
 import java.util.Optional;
 
 public interface _MatrixEmailBridge {
 
+    _MatrixID getId(String mxId) throws InvalidMatrixIdException;
+
     Optional<ThreePidMapping> getMatrixId(ThreePid threePid);
 
-    void queryUser(UserQuery query);
+    void queryUser(UserQuery query) throws UserNotFoundException;
 
-    void queryRoom(RoomQuery query);
+    void queryRoom(RoomQuery query) throws RoomNotFoundException;
 
     void push(MatrixTransactionPush transaction);
 

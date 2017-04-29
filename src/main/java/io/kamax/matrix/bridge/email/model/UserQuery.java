@@ -26,4 +26,13 @@ public class UserQuery extends AHomeserverCall {
 
     private _MatrixID mxId;
 
+    public UserQuery(_MatrixID mxId, String credentials) {
+        this.mxId = mxId;
+        setCredentials(credentials);
+    }
+
+    public _MatrixID getId() {
+        return mxId;
+    }
+
 }

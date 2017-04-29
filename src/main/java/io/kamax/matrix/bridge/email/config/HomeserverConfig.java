@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.config;
 
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -120,6 +121,10 @@ public class HomeserverConfig implements InitializingBean {
 
         if (aliases == null) {
             aliases = new ArrayList<>();
+        }
+
+        if (StringUtils.isBlank(host)) {
+            host = "https://" + domain;
         }
 
         log.info("Domain: {}", getDomain());

@@ -20,12 +20,19 @@
 
 package io.kamax.matrix.bridge.email.controller;
 
+import io.kamax.matrix.MatrixErrorInfo;
+import io.kamax.matrix.bridge.email.exception.*;
 import io.kamax.matrix.bridge.email.model.MatrixTransactionPush;
+import io.kamax.matrix.bridge.email.model.RoomQuery;
+import io.kamax.matrix.bridge.email.model.UserQuery;
+import io.kamax.matrix.bridge.email.model._MatrixEmailBridge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
@@ -36,34 +43,81 @@ public class ApplicationServiceController {
 
     private Logger log = LoggerFactory.getLogger(ApplicationServiceController.class);
 
+    @Autowired
+    private _MatrixEmailBridge bridge;
+
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(InvalidMatrixIdException.class)
+    @ResponseBody
+    MatrixErrorInfo handleBadRequest(MatrixException e) {
+        return new MatrixErrorInfo(e.getErrorCode());
+    }
+
+    @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
+    @ExceptionHandler(NoHomeserverTokenException.class)
+    @ResponseBody
+    MatrixErrorInfo handleUnauthorized(MatrixException e) {
+        return new MatrixErrorInfo(e.getErrorCode());
+    }
+
+    @ResponseStatus(value = HttpStatus.FORBIDDEN)
+    @ExceptionHandler(InvalidHomeserverTokenException.class)
+    @ResponseBody
+    MatrixErrorInfo handleForbidden(MatrixException e) {
+        return new MatrixErrorInfo(e.getErrorCode());
+    }
+
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    @ExceptionHandler({RoomNotFoundException.class, UserNotFoundException.class})
+    @ResponseBody
+    MatrixErrorInfo handleNotFound(MatrixException e) {
+        return new MatrixErrorInfo(e.getErrorCode());
+    }
+
+    @ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(Throwable.class)
+    @ResponseBody
+    MatrixErrorInfo handleGeneric(HttpServletRequest request, Throwable t) {
+        log.error("Error when processing {} {}", request.getMethod(), request.getRequestURL(), t);
+
+        return new MatrixErrorInfo(t);
+    }
+
     @RequestMapping(value = "/rooms/{roomAlias}", method = GET)
-    public void getRoom(
-            @RequestParam(name = "access_token") String accessToken,
+    public Object getRoom(
+            @RequestParam(name = "access_token", required = false) String accessToken,
             @PathVariable String roomAlias,
             HttpServletResponse response) {
-        log.warn("Room {} was requested by HS but we don't handle any virtual room", roomAlias);
+        log.info("Room {} was requsted by HS", roomAlias);
 
-        response.setStatus(HttpStatus.NOT_FOUND.value());
+        bridge.queryRoom(new RoomQuery(roomAlias, accessToken));
+
+        return EmptyJsonResponse.get();
     }
 
     @RequestMapping(value = "/users/{mxId}", method = GET)
-    public void getUser(
-            @RequestParam(name = "access_token") String accessToken,
+    public Object getUser(
+            @RequestParam(name = "access_token", required = false) String accessToken,
             @PathVariable String mxId,
             HttpServletResponse response) {
         log.info("User {} was requested by HS", mxId);
 
-        response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        bridge.queryUser(new UserQuery(bridge.getId(mxId), accessToken));
+
+        return EmptyJsonResponse.get();
     }
 
     @RequestMapping(value = "/transactions/{txnId}", method = PUT)
     public Object getTransaction(
-            @RequestParam(name = "access_token") String accessToken,
+            @RequestParam(name = "access_token", required = false) String accessToken,
             @PathVariable String txnId,
             @RequestBody MatrixTransactionPush data) {
         log.info("We got data: {}", data.getEvents());
 
-        return "{}";
+        data.setId(txnId);
+        bridge.push(data);
+
+        return EmptyJsonResponse.get();
     }
 
 }

@@ -4,11 +4,11 @@ server:
 # HS configuration
 homeserver:
   # Domain for which this homeserver is authoritative
-  domain: "example.org"
+  domain: "localhost"
 
   # Host that will be used when connecting to endpoints for this HS.
   # If this value is commented out or empty, the domain will be used.
-  host: ""
+  host: "http://localhost:8008"
 
   # The token used by the AS when communicating with the HS
   asToken: "MY_SECRET_AS_TOKEN"

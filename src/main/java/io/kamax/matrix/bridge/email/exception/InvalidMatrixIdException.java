@@ -18,19 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.exception;
 
-public class RoomQuery extends AHomeserverCall {
+public class InvalidMatrixIdException extends MatrixException {
 
-    private String alias;
-
-    public RoomQuery(String alias, String credentials) {
-        this.alias = alias;
-        setCredentials(credentials);
-    }
-
-    public String getAlias() {
-        return alias;
+    @Override
+    public String getErrorCode() {
+        return "M_MATRIX_ID_INVALID";
     }
 
 }
