@@ -1,0 +1,72 @@
+/*
+ * matrix-appservice-email - Matrix Bridge to E-mail
+ * Copyright (C) 2017 Maxime Dor
+ *
+ * https://max.kamax.io/
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package io.kamax.matrix.bridge.email.model;
+
+import io.kamax.matrix._MatrixID;
+
+public class BridgeSubscription implements _BridgeSubscription {
+
+    private String id;
+    private String roomId;
+    private _MatrixBridgeUser mxUser;
+
+    public BridgeSubscription(String id, String roomId, _MatrixBridgeUser mxUser) {
+        this.id = id;
+        this.roomId = roomId;
+        this.mxUser = mxUser;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public String getEmail() {
+        return mxUser.getEmail();
+    }
+
+    @Override
+    public _MatrixID getMatrixId() {
+        return mxUser.getClient().getUserId();
+    }
+
+    @Override
+    public String getRoomId() {
+        return roomId;
+    }
+
+    @Override
+    public String getHomeserverDomain() {
+        return mxUser.getClient().getHomeserver().getDomain();
+    }
+
+    @Override
+    public void sendViaMatrix(String msg) {
+        mxUser.getClient().getRoom(roomId).send(msg);
+    }
+
+    @Override
+    public void sendViaEmail(String msg) {
+
+    }
+
+}

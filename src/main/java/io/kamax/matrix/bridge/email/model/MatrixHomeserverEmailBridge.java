@@ -33,33 +33,42 @@ import io.kamax.matrix.client.regular.MatrixClient;
 import io.kamax.matrix.hs.MatrixHomeserver;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.matrix.hs._MatrixHomeserver;
-import io.kamax.matrix.hs._Room;
+import io.kamax.matrix.hs._MatrixRoom;
 import io.kamax.matrix.hs.event._MatrixEvent;
 import io.kamax.matrix.hs.event._RoomMembershipEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MatrixEmailBridgeHomeserverHandler {
+@Component
+public class MatrixHomeserverEmailBridge {
 
-    private Logger log = LoggerFactory.getLogger(MatrixEmailBridgeHomeserverHandler.class);
+    private Logger log = LoggerFactory.getLogger(MatrixHomeserverEmailBridge.class);
+
+    @Autowired
+    private _SubscriptionManager subMgr;
+
+    @Autowired
+    private BridgeEmailCodec emailCodec;
 
     private HomeserverConfig cfg;
-    private BridgeEmailCodec emailCodec;
 
     private List<Pattern> patterns;
 
+    private _MatrixHomeserver hs;
     private _MatrixApplicationServiceClient globalUser;
-    private Map<String, _MatrixClient> vClients = new HashMap<>();
+    private Map<String, _MatrixBridgeUser> vUsers = new HashMap<>();
 
-    public MatrixEmailBridgeHomeserverHandler(HomeserverConfig cfg) throws URISyntaxException {
+    public MatrixHomeserverEmailBridge(HomeserverConfig cfg) throws URISyntaxException {
         this.cfg = cfg;
 
-        _MatrixHomeserver hs = new MatrixHomeserver(cfg.getDomain(), cfg.getHost());
+        hs = new MatrixHomeserver(cfg.getDomain(), cfg.getHost());
         globalUser = new MatrixApplicationServiceClient(hs, cfg.getAsToken(), cfg.getLocalpart());
 
         patterns = new ArrayList<>();
@@ -70,8 +79,6 @@ public class MatrixEmailBridgeHomeserverHandler {
             log.error("At least one user template must be configured");
             System.exit(1);
         }
-
-        emailCodec = new BridgeEmailCodec();
     }
 
     protected Optional<Matcher> findMatcherForUser(_MatrixID mxId) {
@@ -86,29 +93,31 @@ public class MatrixEmailBridgeHomeserverHandler {
     }
 
     protected boolean isOurUser(_MatrixID mxId) {
-        return vClients.containsKey(mxId.getId()) || findMatcherForUser(mxId).isPresent();
+        return vUsers.containsKey(mxId.getId()) || findMatcherForUser(mxId).isPresent();
     }
 
-    protected Optional<_MatrixClient> findClientForUser(_MatrixID mxId) {
-        return Optional.ofNullable(vClients.computeIfAbsent(mxId.getId(), id -> {
-            if (!isOurUser(mxId)) {
+    protected Optional<_MatrixBridgeUser> findClientForUser(_MatrixID mxId) {
+        return Optional.ofNullable(vUsers.computeIfAbsent(mxId.getId(), id -> {
+            Optional<Matcher> mOpt = findMatcherForUser(mxId);
+            if (!mOpt.isPresent()) {
                 return null;
             }
 
-            return new MatrixClient(globalUser.getHomeserver(), globalUser.getAccessToken(), mxId);
+            String email = emailCodec.decode(mOpt.get().group("email"));
+            _MatrixClient client = new MatrixClient(globalUser.getHomeserver(), globalUser.getAccessToken(), mxId);
+            _MatrixBridgeUser user = new BridgeUser(client, email);
+            return user;
         }));
     }
 
     public void queryUser(UserQuery query) throws UserNotFoundException {
-        Optional<Matcher> mOpt = findMatcherForUser(query.getId());
+        Optional<_MatrixBridgeUser> mOpt = findClientForUser(query.getId());
         if (!mOpt.isPresent()) {
             throw new InvalidMatrixIdException(query.getId().getId());
         }
 
         _MatrixClient user = globalUser.createUser(query.getId().getLocalPart());
-        vClients.put(query.getId().getId(), user);
-
-        user.setDisplayName(emailCodec.decode(mOpt.get().group("email")) + " (Bridge)");
+        user.setDisplayName(mOpt.get().getEmail() + " (Bridge)");
     }
 
     public void queryRoom(RoomQuery query) throws RoomNotFoundException {
@@ -130,7 +139,7 @@ public class MatrixEmailBridgeHomeserverHandler {
     private void pushMembershipEvent(_RoomMembershipEvent ev) {
         log.info("We got membership event {} for {}", ev.getMembership(), ev.getInvitee());
 
-        Optional<_MatrixClient> clientOpt = findClientForUser(ev.getInvitee());
+        Optional<_MatrixBridgeUser> clientOpt = findClientForUser(ev.getInvitee());
         if (!clientOpt.isPresent()) {
             log.info("Event is not for us, skipping");
             return;
@@ -139,13 +148,34 @@ public class MatrixEmailBridgeHomeserverHandler {
         handleMembershipEvent(clientOpt.get(), ev);
     }
 
-    private void handleMembershipEvent(_MatrixClient client, _RoomMembershipEvent ev) {
-        _Room room = client.getRoom(ev.getRoomId());
+    private void handleMembershipEvent(_MatrixBridgeUser user, _RoomMembershipEvent ev) {
+        _MatrixRoom room = user.getClient().getRoom(ev.getRoomId());
 
         if (RoomMembership.Invite.is(ev.getMembership())) {
-            log.info("Joining room {} as {}", ev.getRoomId(), ev.getInvitee());
+            log.info("Joining room {} on {} as {}", ev.getRoomId(), hs.getDomain(), ev.getInvitee());
 
             room.join();
+        }
+
+        if (RoomMembership.Join.is(ev.getMembership())) {
+            log.info("Joined room {} on {} as {}", ev.getRoomId(), hs.getDomain(), ev.getInvitee());
+
+            if (!user.is(globalUser)) {
+                log.info("We are a bridge user, registering subscription");
+
+                _BridgeSubscription sub = subMgr.getOrCreate(ev.getRoomId(), user);
+                log.info("Subscription ID: {}", sub.getId());
+            }
+        }
+
+        if (RoomMembership.Leave.is(ev.getMembership())) {
+            log.info("Left room {} on {} as {}", ev.getRoomId(), hs.getDomain(), ev.getInvitee());
+
+            if (!user.is(globalUser)) {
+                log.info("We are a bridge user, removing subscription");
+
+                subMgr.remove(user.getEmail(), ev.getRoomId(), hs.getDomain());
+            }
         }
     }
 

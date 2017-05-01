@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -48,32 +49,42 @@ public class MatrixEmailBridge implements _MatrixEmailBridge, InitializingBean {
     @Autowired
     private IdentityConfig isCfg;
 
-    private Map<String, MatrixEmailBridgeHomeserverHandler> handlers;
+    @Autowired
+    private ApplicationContext app;
+
+    @Autowired
     private BridgeEmailCodec emailCodec;
+
+    private Map<String, MatrixHomeserverEmailBridge> hsByToken;
+    private Map<String, MatrixHomeserverEmailBridge> hsByDomain;
+
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        handlers = new HashMap<>();
-        handlers.put(hsCfg.getHsToken(), new MatrixEmailBridgeHomeserverHandler(hsCfg));
+        MatrixHomeserverEmailBridge hs = app.getBean(MatrixHomeserverEmailBridge.class, hsCfg);
 
-        emailCodec = new BridgeEmailCodec();
+        hsByToken = new HashMap<>();
+        hsByToken.put(hsCfg.getHsToken(), hs);
+
+        hsByDomain = new HashMap<>();
+        hsByDomain.put(hsCfg.getDomain(), hs);
     }
 
-    protected MatrixEmailBridgeHomeserverHandler validateCredentials(AHomeserverCall call) {
+    protected MatrixHomeserverEmailBridge validateCredentials(AHomeserverCall call) {
         if (StringUtils.isEmpty(call.getCredentials())) {
             log.warn("No credentials supplied");
 
             throw new NoHomeserverTokenException();
         }
 
-        if (!handlers.containsKey(call.getCredentials())) {
+        if (!hsByToken.containsKey(call.getCredentials())) {
             log.warn("Invalid credentials");
 
             throw new InvalidHomeserverTokenException();
         }
 
         log.info("HS provided valid credentials"); // TODO switch to debug later
-        return handlers.get(call.getCredentials());
+        return hsByToken.get(call.getCredentials());
     }
 
     @Override

@@ -20,21 +20,6 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import org.springframework.stereotype.Component;
 
-@Component
-public class BridgeEmailCodec {
-
-    public String decode(String emailEncoded) {
-        return emailEncoded.replace("=", "@");
-    }
-
-    public String encode(String email) {
-        return email.replace("@", "=");
-    }
-
-    public String encode(String template, String email) {
-        return template.replace("%EMAIL%", encode(email));
-    }
-
+public interface _EmailReader {
 }

@@ -20,10 +20,14 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.client._MatrixClient;
 
-public interface _BridgedMatrixID extends _MatrixID {
+public interface _MatrixBridgeUser {
+
+    _MatrixClient getClient();
 
     String getEmail();
+
+    boolean is(_MatrixClient client);
 
 }

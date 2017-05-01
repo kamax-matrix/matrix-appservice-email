@@ -20,21 +20,31 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import org.springframework.stereotype.Component;
+import io.kamax.matrix.client._MatrixClient;
 
-@Component
-public class BridgeEmailCodec {
+public class BridgeUser implements _MatrixBridgeUser {
 
-    public String decode(String emailEncoded) {
-        return emailEncoded.replace("=", "@");
+    private _MatrixClient client;
+    private String email;
+
+    public BridgeUser(_MatrixClient client, String email) {
+        this.client = client;
+        this.email = email;
     }
 
-    public String encode(String email) {
-        return email.replace("@", "=");
+    @Override
+    public _MatrixClient getClient() {
+        return client;
     }
 
-    public String encode(String template, String email) {
-        return template.replace("%EMAIL%", encode(email));
+    @Override
+    public String getEmail() {
+        return email;
+    }
+
+    @Override
+    public boolean is(_MatrixClient client) {
+        return this.client.equals(client);
     }
 
 }

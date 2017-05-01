@@ -20,21 +20,22 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import org.springframework.stereotype.Component;
+import io.kamax.matrix._MatrixID;
 
-@Component
-public class BridgeEmailCodec {
+public interface _BridgeSubscription {
 
-    public String decode(String emailEncoded) {
-        return emailEncoded.replace("=", "@");
-    }
+    String getId();
 
-    public String encode(String email) {
-        return email.replace("@", "=");
-    }
+    String getEmail();
 
-    public String encode(String template, String email) {
-        return template.replace("%EMAIL%", encode(email));
-    }
+    _MatrixID getMatrixId();
+
+    String getRoomId();
+
+    String getHomeserverDomain();
+
+    void sendViaMatrix(String msg);
+
+    void sendViaEmail(String msg);
 
 }
