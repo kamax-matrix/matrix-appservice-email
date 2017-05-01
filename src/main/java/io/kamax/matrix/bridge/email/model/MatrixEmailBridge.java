@@ -22,14 +22,10 @@ package io.kamax.matrix.bridge.email.model;
 
 import io.kamax.matrix.*;
 import io.kamax.matrix.bridge.email.config.HomeserverConfig;
+import io.kamax.matrix.bridge.email.config.IdentityConfig;
 import io.kamax.matrix.bridge.email.exception.InvalidHomeserverTokenException;
 import io.kamax.matrix.bridge.email.exception.InvalidMatrixIdException;
 import io.kamax.matrix.bridge.email.exception.NoHomeserverTokenException;
-import io.kamax.matrix.bridge.email.exception.RoomNotFoundException;
-import io.kamax.matrix.client.MatrixApplicationServiceClient;
-import io.kamax.matrix.client._MatrixApplicationServiceClient;
-import io.kamax.matrix.hs.MatrixHomeserver;
-import io.kamax.matrix.hs._MatrixHomeserver;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,9 +33,9 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class MatrixEmailBridge implements _MatrixEmailBridge, InitializingBean {
@@ -49,61 +45,35 @@ public class MatrixEmailBridge implements _MatrixEmailBridge, InitializingBean {
     @Autowired
     private HomeserverConfig hsCfg;
 
-    private Map<String, _MatrixApplicationServiceClient> clients;
-    private List<Pattern> patterns;
+    @Autowired
+    private IdentityConfig isCfg;
 
-    protected String decodeEmail(String email) {
-        return email.replace("=", "@");
-    }
-
-    protected String encodeEmail(String email) {
-        return hsCfg.getUsers().get(0).getTemplate().replace("%EMAIL%", encodeEmail(email.replace("@", "=")));
-    }
-
-    protected String decodeEmail(_MatrixID mxId) {
-        for (Pattern p : patterns) {
-            Matcher m = p.matcher(mxId.getLocalPart());
-            if (m.matches()) {
-                return m.group(1).replace("=", "@");
-            }
-        }
-
-        throw new IllegalArgumentException(mxId.getLocalPart() + " is not an encoded e-mail address");
-    }
+    private Map<String, MatrixEmailBridgeHomeserverHandler> handlers;
+    private BridgeEmailCodec emailCodec;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (hsCfg.getUsers().size() < 1) {
-            log.error("At least one user template must be configured");
-            System.exit(1);
-        }
-        _MatrixHomeserver hs = new MatrixHomeserver(hsCfg.getHost());
-        _MatrixApplicationServiceClient client = new MatrixApplicationServiceClient();
-        client.setHomeserver(hs);
-        client.setAccessToken(hsCfg.getAsToken());
+        handlers = new HashMap<>();
+        handlers.put(hsCfg.getHsToken(), new MatrixEmailBridgeHomeserverHandler(hsCfg));
 
-        clients = new HashMap<>();
-        clients.put(hsCfg.getHsToken(), client);
-
-        patterns = new ArrayList<>();
-        patterns.add(Pattern.compile(hsCfg.getUsers().get(0).getTemplate().replace("%EMAIL%", "(.*)")));
+        emailCodec = new BridgeEmailCodec();
     }
 
-    protected _MatrixApplicationServiceClient validateCredentials(AHomeserverCall call) {
+    protected MatrixEmailBridgeHomeserverHandler validateCredentials(AHomeserverCall call) {
         if (StringUtils.isEmpty(call.getCredentials())) {
             log.warn("No credentials supplied");
 
             throw new NoHomeserverTokenException();
         }
 
-        if (!StringUtils.equals(hsCfg.getHsToken(), call.getCredentials())) {
-            log.warn("Invalid credentials from HS!");
+        if (!handlers.containsKey(call.getCredentials())) {
+            log.warn("Invalid credentials");
 
             throw new InvalidHomeserverTokenException();
         }
 
         log.info("HS provided valid credentials"); // TODO switch to debug later
-        return clients.get(call.getCredentials());
+        return handlers.get(call.getCredentials());
     }
 
     @Override
@@ -111,7 +81,7 @@ public class MatrixEmailBridge implements _MatrixEmailBridge, InitializingBean {
         try {
             return new MatrixID(mxId);
         } catch (IllegalArgumentException e) {
-            throw new InvalidMatrixIdException();
+            throw new InvalidMatrixIdException(e);
         }
     }
 
@@ -121,33 +91,23 @@ public class MatrixEmailBridge implements _MatrixEmailBridge, InitializingBean {
             return Optional.empty();
         }
 
-        String localpart = encodeEmail(threePid.getAddress());
-        return Optional.of(new ThreePidMapping(threePid, new MatrixID(localpart, hsCfg.getDomain())));
+        String localpart = emailCodec.encode(isCfg.getTemplate(), threePid.getAddress());
+        return Optional.of(new ThreePidMapping(threePid, new MatrixID(localpart, isCfg.getDomain())));
     }
 
     @Override
     public void queryUser(UserQuery query) {
-        _MatrixApplicationServiceClient client = validateCredentials(query);
-
-        MatrixUser user = new MatrixUser();
-        user.setId(query.getId());
-        user.setName(decodeEmail(query.getId()) + " (Bridge)");
-
-        client.createUser(user);
+        validateCredentials(query).queryUser(query);
     }
 
     @Override
     public void queryRoom(RoomQuery query) {
-        validateCredentials(query);
-
-        throw new RoomNotFoundException();
+        validateCredentials(query).queryRoom(query);
     }
 
     @Override
     public void push(MatrixTransactionPush transaction) {
-        validateCredentials(transaction);
-
-        throw new IllegalStateException();
+        validateCredentials(transaction).push(transaction);
     }
 
 }

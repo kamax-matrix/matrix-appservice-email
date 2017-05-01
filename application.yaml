@@ -39,3 +39,7 @@ homeserver:
 
   # Patterns of Room aliases
   aliases: []
+
+identity:
+  template: "email_%EMAIL%"
+  domain: "localhost"

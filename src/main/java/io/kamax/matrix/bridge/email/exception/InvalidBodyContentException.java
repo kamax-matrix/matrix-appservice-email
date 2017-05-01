@@ -18,31 +18,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.exception;
 
-import io.kamax.matrix.hs.event._MatrixEvent;
+public class InvalidBodyContentException extends MatrixException {
 
-import java.util.List;
-
-public class MatrixTransactionPush extends AHomeserverCall {
-
-    private String id;
-    private List<_MatrixEvent> events;
-
-    public String getId() {
-        return id;
+    public InvalidBodyContentException(Throwable t) {
+        super(t);
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public List<_MatrixEvent> getEvents() {
-        return events;
-    }
-
-    public void setEvents(List<_MatrixEvent> events) {
-        this.events = events;
+    @Override
+    public String getErrorCode() {
+        return "M.INVALID_REQUEST.BODY_CONTENT";
     }
 
 }

@@ -18,31 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.config;
 
-import io.kamax.matrix.hs.event._MatrixEvent;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-import java.util.List;
+@Configuration
+@ConfigurationProperties(prefix = "identity")
+public class IdentityConfig {
 
-public class MatrixTransactionPush extends AHomeserverCall {
+    private String template;
+    private String domain;
 
-    private String id;
-    private List<_MatrixEvent> events;
-
-    public String getId() {
-        return id;
+    public String getTemplate() {
+        return template;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setTemplate(String template) {
+        this.template = template;
     }
 
-    public List<_MatrixEvent> getEvents() {
-        return events;
+    public String getDomain() {
+        return domain;
     }
 
-    public void setEvents(List<_MatrixEvent> events) {
-        this.events = events;
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 
 }

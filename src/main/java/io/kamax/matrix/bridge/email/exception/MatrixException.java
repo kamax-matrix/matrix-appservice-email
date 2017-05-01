@@ -22,6 +22,18 @@ package io.kamax.matrix.bridge.email.exception;
 
 public abstract class MatrixException extends RuntimeException {
 
+    public MatrixException() {
+        super();
+    }
+
+    public MatrixException(String s) {
+        super(s);
+    }
+
+    public MatrixException(Throwable t) {
+        super(t);
+    }
+
     public abstract String getErrorCode();
 
 }

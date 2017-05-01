@@ -20,29 +20,10 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix.hs.event._MatrixEvent;
+import io.kamax.matrix._MatrixID;
 
-import java.util.List;
+public interface _BridgedMatrixID extends _MatrixID {
 
-public class MatrixTransactionPush extends AHomeserverCall {
-
-    private String id;
-    private List<_MatrixEvent> events;
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public List<_MatrixEvent> getEvents() {
-        return events;
-    }
-
-    public void setEvents(List<_MatrixEvent> events) {
-        this.events = events;
-    }
+    String getEmail();
 
 }

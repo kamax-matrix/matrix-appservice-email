@@ -22,6 +22,14 @@ package io.kamax.matrix.bridge.email.exception;
 
 public class InvalidMatrixIdException extends MatrixException {
 
+    public InvalidMatrixIdException(String s) {
+        super(s);
+    }
+
+    public InvalidMatrixIdException(Throwable t) {
+        super(t);
+    }
+
     @Override
     public String getErrorCode() {
         return "M_MATRIX_ID_INVALID";

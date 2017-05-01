@@ -24,7 +24,7 @@ public abstract class AHomeserverCall implements _HomeserverCall {
 
     private String credentials;
 
-    protected void setCredentials(String credentials) {
+    public void setCredentials(String credentials) {
         this.credentials = credentials;
     }
 

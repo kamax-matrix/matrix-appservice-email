@@ -20,12 +20,19 @@
 
 package io.kamax.matrix.bridge.email.controller;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import io.kamax.matrix.MatrixErrorInfo;
 import io.kamax.matrix.bridge.email.exception.*;
 import io.kamax.matrix.bridge.email.model.MatrixTransactionPush;
 import io.kamax.matrix.bridge.email.model.RoomQuery;
 import io.kamax.matrix.bridge.email.model.UserQuery;
 import io.kamax.matrix.bridge.email.model._MatrixEmailBridge;
+import io.kamax.matrix.hs.event._MatrixEvent;
+import io.kamax.matrix.json.MatrixJsonEventFactory;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +40,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.PUT;
@@ -46,10 +55,14 @@ public class ApplicationServiceController {
     @Autowired
     private _MatrixEmailBridge bridge;
 
+    private JsonParser jsonParser = new JsonParser();
+
     @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidMatrixIdException.class)
+    @ExceptionHandler({InvalidMatrixIdException.class, InvalidBodyContentException.class})
     @ResponseBody
-    MatrixErrorInfo handleBadRequest(MatrixException e) {
+    MatrixErrorInfo handleBadRequest(HttpServletRequest request, MatrixException e) {
+        log.error("Error when processing {} {}", request.getMethod(), request.getRequestURL(), e);
+
         return new MatrixErrorInfo(e.getErrorCode());
     }
 
@@ -86,8 +99,7 @@ public class ApplicationServiceController {
     @RequestMapping(value = "/rooms/{roomAlias}", method = GET)
     public Object getRoom(
             @RequestParam(name = "access_token", required = false) String accessToken,
-            @PathVariable String roomAlias,
-            HttpServletResponse response) {
+            @PathVariable String roomAlias) {
         log.info("Room {} was requsted by HS", roomAlias);
 
         bridge.queryRoom(new RoomQuery(roomAlias, accessToken));
@@ -95,11 +107,10 @@ public class ApplicationServiceController {
         return EmptyJsonResponse.get();
     }
 
-    @RequestMapping(value = "/users/{mxId}", method = GET)
+    @RequestMapping(value = "/users/{mxId:.+}", method = GET)
     public Object getUser(
             @RequestParam(name = "access_token", required = false) String accessToken,
-            @PathVariable String mxId,
-            HttpServletResponse response) {
+            @PathVariable String mxId) {
         log.info("User {} was requested by HS", mxId);
 
         bridge.queryUser(new UserQuery(bridge.getId(mxId), accessToken));
@@ -109,15 +120,32 @@ public class ApplicationServiceController {
 
     @RequestMapping(value = "/transactions/{txnId}", method = PUT)
     public Object getTransaction(
+            HttpServletRequest request,
             @RequestParam(name = "access_token", required = false) String accessToken,
-            @PathVariable String txnId,
-            @RequestBody MatrixTransactionPush data) {
-        log.info("We got data: {}", data.getEvents());
+            @PathVariable String txnId) throws IOException {
+        log.info("Processing {}?{}", request.getRequestURL(), request.getQueryString());
 
-        data.setId(txnId);
-        bridge.push(data);
+        String json = IOUtils.toString(request.getInputStream(), request.getCharacterEncoding());
+        try {
+            JsonObject rootObj = jsonParser.parse(json).getAsJsonObject();
+            JsonArray eventsJson = rootObj.get("events").getAsJsonArray();
 
-        return EmptyJsonResponse.get();
+            List<_MatrixEvent> events = new ArrayList<>();
+            for (JsonElement event : eventsJson) {
+                events.add(MatrixJsonEventFactory.get(event.getAsJsonObject()));
+            }
+
+            MatrixTransactionPush transaction = new MatrixTransactionPush();
+            transaction.setCredentials(accessToken);
+            transaction.setId(txnId);
+            transaction.setEvents(events);
+
+            bridge.push(transaction);
+
+            return EmptyJsonResponse.get();
+        } catch (IllegalStateException e) {
+            throw new InvalidBodyContentException(e);
+        }
     }
 
 }

@@ -20,29 +20,18 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix.hs.event._MatrixEvent;
+public class BridgeEmailCodec {
 
-import java.util.List;
-
-public class MatrixTransactionPush extends AHomeserverCall {
-
-    private String id;
-    private List<_MatrixEvent> events;
-
-    public String getId() {
-        return id;
+    public String decode(String emailEncoded) {
+        return emailEncoded.replace("=", "@");
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public String encode(String email) {
+        return email.replace("@", "=");
     }
 
-    public List<_MatrixEvent> getEvents() {
-        return events;
-    }
-
-    public void setEvents(List<_MatrixEvent> events) {
-        this.events = events;
+    public String encode(String template, String email) {
+        return template.replace("%EMAIL%", encode(email));
     }
 
 }
