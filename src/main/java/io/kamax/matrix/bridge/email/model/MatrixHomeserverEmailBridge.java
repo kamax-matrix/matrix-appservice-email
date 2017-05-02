@@ -57,19 +57,18 @@ public class MatrixHomeserverEmailBridge {
     @Autowired
     private BridgeEmailCodec emailCodec;
 
-    private HomeserverConfig cfg;
-
     private List<Pattern> patterns;
 
     private _MatrixHomeserver hs;
-    private _MatrixApplicationServiceClient globalUser;
-    private Map<String, _MatrixBridgeUser> vUsers = new HashMap<>();
+    private _MatrixApplicationServiceClient mxMgr;
+    private Map<String, _MatrixBridgeUser> vMxUsers = new HashMap<>();
+
+    private _EmailReader emMgr;
+    private Map<String, _EmailClient> vEmUsers = new HashMap<>();
 
     public MatrixHomeserverEmailBridge(HomeserverConfig cfg) throws URISyntaxException {
-        this.cfg = cfg;
-
         hs = new MatrixHomeserver(cfg.getDomain(), cfg.getHost());
-        globalUser = new MatrixApplicationServiceClient(hs, cfg.getAsToken(), cfg.getLocalpart());
+        mxMgr = new MatrixApplicationServiceClient(hs, cfg.getAsToken(), cfg.getLocalpart());
 
         patterns = new ArrayList<>();
         for (EntityTemplate entityTemplate : cfg.getUsers()) {
@@ -93,21 +92,24 @@ public class MatrixHomeserverEmailBridge {
     }
 
     protected boolean isOurUser(_MatrixID mxId) {
-        return vUsers.containsKey(mxId.getId()) || findMatcherForUser(mxId).isPresent();
+        return vMxUsers.containsKey(mxId.getId()) || findMatcherForUser(mxId).isPresent();
     }
 
     protected Optional<_MatrixBridgeUser> findClientForUser(_MatrixID mxId) {
-        return Optional.ofNullable(vUsers.computeIfAbsent(mxId.getId(), id -> {
+        return Optional.ofNullable(vMxUsers.computeIfAbsent(mxId.getId(), id -> {
             Optional<Matcher> mOpt = findMatcherForUser(mxId);
             if (!mOpt.isPresent()) {
                 return null;
             }
 
             String email = emailCodec.decode(mOpt.get().group("email"));
-            _MatrixClient client = new MatrixClient(globalUser.getHomeserver(), globalUser.getAccessToken(), mxId);
-            _MatrixBridgeUser user = new BridgeUser(client, email);
-            return user;
+            _MatrixClient client = new MatrixClient(mxMgr.getHomeserver(), mxMgr.getAccessToken(), mxId);
+            return new BridgeUser(client, email);
         }));
+    }
+
+    protected _EmailClient findClientForUser(String email) {
+        return vEmUsers.computeIfAbsent(email, id -> new EmailClient());
     }
 
     public void queryUser(UserQuery query) throws UserNotFoundException {
@@ -116,7 +118,7 @@ public class MatrixHomeserverEmailBridge {
             throw new InvalidMatrixIdException(query.getId().getId());
         }
 
-        _MatrixClient user = globalUser.createUser(query.getId().getLocalPart());
+        _MatrixClient user = mxMgr.createUser(query.getId().getLocalPart());
         user.setDisplayName(mOpt.get().getEmail() + " (Bridge)");
     }
 
@@ -160,21 +162,27 @@ public class MatrixHomeserverEmailBridge {
         if (RoomMembership.Join.is(ev.getMembership())) {
             log.info("Joined room {} on {} as {}", ev.getRoomId(), hs.getDomain(), ev.getInvitee());
 
-            if (!user.is(globalUser)) {
+            if (!user.is(mxMgr)) {
                 log.info("We are a bridge user, registering subscription");
 
-                _BridgeSubscription sub = subMgr.getOrCreate(ev.getRoomId(), user);
-                log.info("Subscription ID: {}", sub.getId());
+                _BridgeSubscription sub = subMgr.getOrCreate(ev.getRoomId(), user.getClient(), findClientForUser(user.getEmail()));
+                log.info("Subscription | Matrix key: {} | Email key: {}", sub.getMatrixKey(), sub.getEmailKey());
             }
         }
 
         if (RoomMembership.Leave.is(ev.getMembership())) {
             log.info("Left room {} on {} as {}", ev.getRoomId(), hs.getDomain(), ev.getInvitee());
 
-            if (!user.is(globalUser)) {
+            if (!user.is(mxMgr)) {
                 log.info("We are a bridge user, removing subscription");
 
-                subMgr.remove(user.getEmail(), ev.getRoomId(), hs.getDomain());
+                Optional<_BridgeSubscription> subOpt = subMgr.remove(ev.getRoomId(), user.getClient(), findClientForUser(user.getEmail()));
+                if (subOpt.isPresent()) {
+                    log.info("Subscription is still active, canceling");
+                    subOpt.get().cancelFromMatrix();
+                } else {
+                    log.info("Subscription was already removed, skipping");
+                }
             }
         }
     }

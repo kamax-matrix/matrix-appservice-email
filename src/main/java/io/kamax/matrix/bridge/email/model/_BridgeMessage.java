@@ -20,10 +20,12 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public interface _EmailClient {
+public interface _BridgeMessage<T> {
 
-    String getEmail();
+    T getSender();
 
-    _EmailChannel getChannel(String channelId);
+    int getTimestamp();
+
+    String getContent();
 
 }

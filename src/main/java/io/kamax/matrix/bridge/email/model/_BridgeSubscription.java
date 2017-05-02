@@ -20,22 +20,26 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.client._MatrixClient;
 
 public interface _BridgeSubscription {
 
-    String getId();
+    String getEmailKey();
 
-    String getEmail();
+    String getMatrixKey();
 
-    _MatrixID getMatrixId();
+    _MatrixClient getMatrixUser();
 
     String getRoomId();
 
-    String getHomeserverDomain();
+    _EmailClient getEmailClient();
 
-    void sendViaMatrix(String msg);
+    void forward(_EmailBridgeMessage msg);
 
-    void sendViaEmail(String msg);
+    void forward(_MatrixBridgeMessage msg);
+
+    void cancelFromMatrix();
+
+    void cancelFromEmail();
 
 }

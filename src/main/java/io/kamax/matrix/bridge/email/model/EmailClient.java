@@ -20,10 +20,16 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public interface _EmailClient {
+public class EmailClient implements _EmailClient {
 
-    String getEmail();
+    @Override
+    public String getEmail() {
+        return null;
+    }
 
-    _EmailChannel getChannel(String channelId);
+    @Override
+    public _EmailChannel getChannel(String channelId) {
+        return null;
+    }
 
 }

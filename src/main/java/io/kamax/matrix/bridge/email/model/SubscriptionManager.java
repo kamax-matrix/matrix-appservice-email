@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import io.kamax.matrix.client._MatrixClient;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -30,88 +31,63 @@ import java.util.UUID;
 @Component
 public class SubscriptionManager implements _SubscriptionManager {
 
-    private Map<String, _BridgeSubscription> subsUuid = new HashMap<>();
-    private Map<SubscriptionId, _BridgeSubscription> subsIds = new HashMap<>();
+    private Map<String, _BridgeSubscription> subsEmailKey = new HashMap<>();
+    private Map<String, _BridgeSubscription> subsMatrixKey = new HashMap<>();
+
+    private String getMatrixKey(String hsDomain, String roomId, String email) {
+        return hsDomain + "|" + roomId + "|" + email;
+    }
+
+    private String getMatrixKey(_MatrixClient mxUser, _EmailClient emUser, String mxRoomId) {
+        return getMatrixKey(mxUser.getHomeserver().getDomain(), mxRoomId, emUser.getEmail());
+    }
+
+    private Optional<_BridgeSubscription> findById(String email, String roomId, String hsDomain) {
+        return Optional.ofNullable(subsMatrixKey.get(getMatrixKey(hsDomain, roomId, email)));
+    }
 
     @Override
-    public _BridgeSubscription getOrCreate(String roomId, _MatrixBridgeUser user) {
-        SubscriptionId subId = new SubscriptionId(user.getEmail(), roomId, user.getClient().getHomeserver().getDomain());
+    public _BridgeSubscription getOrCreate(String roomId, _MatrixClient mxUser, _EmailClient emUser) {
+        return findById(emUser.getEmail(), roomId, mxUser.getHomeserver().getDomain()).orElseGet(() -> {
+            String emailKey;
+            do {
+                emailKey = UUID.randomUUID().toString().replace("-", "");
+            } while (subsEmailKey.containsKey(emailKey));
 
-        _BridgeSubscription sub = subsIds.get(subId);
-        if (sub != null) {
+            String matrixKey = getMatrixKey(mxUser, emUser, roomId);
+            _BridgeSubscription sub = new BridgeSubscription(roomId, emailKey, matrixKey, mxUser, emUser);
+            subsEmailKey.put(emailKey, sub);
+            subsMatrixKey.put(matrixKey, sub);
+
             return sub;
-        }
-
-        String uuid;
-        do {
-            uuid = UUID.randomUUID().toString();
-        } while (subsUuid.containsKey(uuid));
-
-        sub = new BridgeSubscription(uuid, roomId, user);
-        subsIds.put(subId, sub);
-        subsUuid.put(uuid, sub);
-
-        return sub;
+        });
     }
 
     @Override
-    public _BridgeSubscription get(String id) {
-        return subsUuid.get(id);
+    public Optional<_BridgeSubscription> get(String emailKey) {
+        return Optional.ofNullable(subsEmailKey.get(emailKey));
     }
 
     @Override
-    public Optional<_BridgeSubscription> remove(String id) {
-        return null;
+    public Optional<_BridgeSubscription> remove(String emailKey) {
+        _BridgeSubscription sub = subsEmailKey.remove(emailKey);
+        if (sub == null) {
+            return Optional.empty();
+        }
+
+        subsMatrixKey.remove(sub.getMatrixKey());
+        return Optional.of(sub);
     }
 
     @Override
-    public Optional<_BridgeSubscription> remove(String email, String roomId, String hsDomain) {
-        return null;
-    }
-
-    private class SubscriptionId {
-
-        private String email;
-        private String roomId;
-        private String hs;
-
-        SubscriptionId(String email, String roomId, String hs) {
-            this.email = email;
-            this.roomId = roomId;
-            this.hs = hs;
+    public Optional<_BridgeSubscription> remove(String roomId, _MatrixClient mxUser, _EmailClient emClient) {
+        _BridgeSubscription sub = subsMatrixKey.remove(getMatrixKey(mxUser, emClient, roomId));
+        if (sub == null) {
+            return Optional.empty();
         }
 
-        public String getEmail() {
-            return email;
-        }
-
-        public String getRoomId() {
-            return roomId;
-        }
-
-        public String getHs() {
-            return hs;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            SubscriptionId that = (SubscriptionId) o;
-
-            if (!email.equals(that.email)) return false;
-            if (!roomId.equals(that.roomId)) return false;
-            return hs.equals(that.hs);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = email.hashCode();
-            result = 31 * result + roomId.hashCode();
-            result = 31 * result + hs.hashCode();
-            return result;
-        }
+        subsEmailKey.remove(sub.getEmailKey());
+        return Optional.of(sub);
     }
 
 }

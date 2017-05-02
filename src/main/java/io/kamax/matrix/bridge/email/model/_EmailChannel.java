@@ -22,6 +22,8 @@ package io.kamax.matrix.bridge.email.model;
 
 public interface _EmailChannel {
 
-    void send(String message);
+    void send(_MatrixBridgeMessage msg);
+
+    void leave();
 
 }

@@ -20,33 +20,41 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.client._MatrixClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BridgeSubscription implements _BridgeSubscription {
 
-    private String id;
+    private Logger log = LoggerFactory.getLogger(BridgeSubscription.class);
+
     private String roomId;
-    private _MatrixBridgeUser mxUser;
+    private String emailKey;
+    private String matrixKey;
+    private _MatrixClient mxUser;
+    private _EmailClient emUser;
 
-    public BridgeSubscription(String id, String roomId, _MatrixBridgeUser mxUser) {
-        this.id = id;
+    public BridgeSubscription(String roomId, String emailKey, String matrixKey, _MatrixClient mxUser, _EmailClient emUser) {
         this.roomId = roomId;
+        this.matrixKey = matrixKey;
+        this.emailKey = emailKey;
         this.mxUser = mxUser;
+        this.emUser = emUser;
     }
 
     @Override
-    public String getId() {
-        return id;
+    public String getEmailKey() {
+        return emailKey;
     }
 
     @Override
-    public String getEmail() {
-        return mxUser.getEmail();
+    public String getMatrixKey() {
+        return matrixKey;
     }
 
     @Override
-    public _MatrixID getMatrixId() {
-        return mxUser.getClient().getUserId();
+    public _MatrixClient getMatrixUser() {
+        return null;
     }
 
     @Override
@@ -55,18 +63,32 @@ public class BridgeSubscription implements _BridgeSubscription {
     }
 
     @Override
-    public String getHomeserverDomain() {
-        return mxUser.getClient().getHomeserver().getDomain();
+    public _EmailClient getEmailClient() {
+        return null;
     }
 
     @Override
-    public void sendViaMatrix(String msg) {
-        mxUser.getClient().getRoom(roomId).send(msg);
+    public void forward(_EmailBridgeMessage msg) {
+        mxUser.getRoom(roomId).send(msg.getContent());
     }
 
     @Override
-    public void sendViaEmail(String msg) {
+    public void forward(_MatrixBridgeMessage msg) {
+        emUser.getChannel(emailKey).send(msg);
+    }
 
+    @Override
+    public void cancelFromMatrix() {
+        log.info("Matrix: Canceling subscription for {} with key {}", emUser.getEmail(), matrixKey);
+
+        emUser.getChannel(emailKey).leave();
+    }
+
+    @Override
+    public void cancelFromEmail() {
+        log.info("E-mail: Canceling subscription for {} with key {}", emUser.getEmail(), emailKey);
+
+        mxUser.getRoom(roomId).leave();
     }
 
 }
