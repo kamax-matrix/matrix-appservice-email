@@ -164,17 +164,21 @@ public class MatrixHomeserverEmailBridge implements InitializingBean {
     private void pushMessageEvent(_RoomMessageEvent ev) {
         log.info("We got message event {} in {}", ev.getType(), ev.getRoomId());
 
-        if (isOurUser(ev.getSender())) {
-            log.info("Ignoring our own events");
-            return;
-        }
-
+        log.info("Computing forward list");
+        log.info("Listing users in the room {}", ev.getRoomId());
         List<_MatrixID> users = mxMgr.getRoom(ev.getRoomId()).getJoinedUsers();
         for (_MatrixID user : users) {
             if (!isOurUser(user)) {
+                log.info("{} is not a bridged user, skipping", user);
                 continue;
             }
 
+            if (user.equals(ev.getSender())) {
+                log.info("{} is the original sender of the event, skipping", user);
+                continue;
+            }
+
+            log.info("{} is a valid potential bridge user", user);
             Optional<_MatrixBridgeUser> userOpt = findClientForUser(user);
             if (!userOpt.isPresent()) {
                 log.warn("No Matrix client for MXID {} while present in the room", user);
@@ -187,6 +191,7 @@ public class MatrixHomeserverEmailBridge implements InitializingBean {
                 continue;
             }
 
+            log.info("Forwarding message {} from room {} to {}", ev.getId(), ev.getRoomId(), user);
             subOpt.get().forward(new MatrixMessage(subOpt.get().getMatrixKey(), mxMgr.getUser(ev.getSender()), ev.getBody()));
         }
     }
