@@ -21,6 +21,7 @@
 package io.kamax.matrix.bridge.email.model;
 
 import io.kamax.matrix._MatrixID;
+import io.kamax.matrix._MatrixUser;
 import io.kamax.matrix.bridge.email.config.EntityTemplate;
 import io.kamax.matrix.bridge.email.config.HomeserverConfig;
 import io.kamax.matrix.bridge.email.exception.InvalidMatrixIdException;
@@ -30,14 +31,16 @@ import io.kamax.matrix.client._MatrixClient;
 import io.kamax.matrix.client.as.MatrixApplicationServiceClient;
 import io.kamax.matrix.client.as._MatrixApplicationServiceClient;
 import io.kamax.matrix.client.regular.MatrixClient;
+import io.kamax.matrix.event._MatrixEvent;
+import io.kamax.matrix.event._RoomMembershipEvent;
+import io.kamax.matrix.event._RoomMessageEvent;
 import io.kamax.matrix.hs.MatrixHomeserver;
 import io.kamax.matrix.hs.RoomMembership;
 import io.kamax.matrix.hs._MatrixHomeserver;
 import io.kamax.matrix.hs._MatrixRoom;
-import io.kamax.matrix.hs.event._MatrixEvent;
-import io.kamax.matrix.hs.event._RoomMembershipEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -47,7 +50,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
-public class MatrixHomeserverEmailBridge {
+public class MatrixHomeserverEmailBridge implements InitializingBean {
 
     private Logger log = LoggerFactory.getLogger(MatrixHomeserverEmailBridge.class);
 
@@ -63,7 +66,8 @@ public class MatrixHomeserverEmailBridge {
     private _MatrixApplicationServiceClient mxMgr;
     private Map<String, _MatrixBridgeUser> vMxUsers = new HashMap<>();
 
-    private _EmailReader emMgr;
+    @Autowired
+    private _EmailManager emMgr;
     private Map<String, _EmailClient> vEmUsers = new HashMap<>();
 
     public MatrixHomeserverEmailBridge(HomeserverConfig cfg) throws URISyntaxException {
@@ -78,6 +82,23 @@ public class MatrixHomeserverEmailBridge {
             log.error("At least one user template must be configured");
             System.exit(1);
         }
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        emMgr.addListener(msg -> {
+            Optional<_BridgeSubscription> subOpt = subMgr.get(msg.getKey());
+            if (!subOpt.isPresent()) {
+                // TODO send error email
+                log.warn("Got e-mail message with invalid key {}", msg.getKey());
+                return;
+            }
+
+            subOpt.get().forward(new EmailBridgeMessage(msg));
+            log.info("E-mail with key {} was forwarded", msg.getKey());
+        });
+
+        emMgr.connect();
     }
 
     protected Optional<Matcher> findMatcherForUser(_MatrixID mxId) {
@@ -109,7 +130,7 @@ public class MatrixHomeserverEmailBridge {
     }
 
     protected _EmailClient findClientForUser(String email) {
-        return vEmUsers.computeIfAbsent(email, id -> new EmailClient());
+        return vEmUsers.computeIfAbsent(email, id -> emMgr.getClient(email));
     }
 
     public void queryUser(UserQuery query) throws UserNotFoundException {
@@ -132,9 +153,41 @@ public class MatrixHomeserverEmailBridge {
         for (_MatrixEvent event : transaction.getEvents()) {
             if (event instanceof _RoomMembershipEvent) {
                 pushMembershipEvent((_RoomMembershipEvent) event);
+            } else if (event instanceof _RoomMessageEvent) {
+                pushMessageEvent((_RoomMessageEvent) event);
             } else {
                 log.info("Unknown event type {} from {}", event.getType(), event.getSender());
             }
+        }
+    }
+
+    private void pushMessageEvent(_RoomMessageEvent ev) {
+        log.info("We got message event {} in {}", ev.getType(), ev.getRoomId());
+
+        if (isOurUser(ev.getSender())) {
+            log.info("Ignoring our own events");
+            return;
+        }
+
+        List<_MatrixID> users = mxMgr.getRoom(ev.getRoomId()).getJoinedUsers();
+        for (_MatrixID user : users) {
+            if (!isOurUser(user)) {
+                continue;
+            }
+
+            Optional<_MatrixBridgeUser> userOpt = findClientForUser(user);
+            if (!userOpt.isPresent()) {
+                log.warn("No Matrix client for MXID {} while present in the room", user);
+                continue;
+            }
+
+            Optional<_BridgeSubscription> subOpt = subMgr.get(ev.getRoomId(), userOpt.get());
+            if (!subOpt.isPresent()) {
+                log.warn("No subscription for MXID {} while present in the room", user);
+                continue;
+            }
+
+            subOpt.get().forward(new MatrixMessage(subOpt.get().getMatrixKey(), mxMgr.getUser(ev.getSender()), ev.getBody()));
         }
     }
 
@@ -185,6 +238,42 @@ public class MatrixHomeserverEmailBridge {
                 }
             }
         }
+    }
+
+    private class MatrixMessage implements _MatrixBridgeMessage {
+
+        private String key;
+        private _MatrixUser sender;
+        private long ts;
+        private String content;
+
+        MatrixMessage(String key, _MatrixUser sender, String content) {
+            this.key = key;
+            this.sender = sender;
+            ts = System.currentTimeMillis(); // TODO fetch TS from Matrix event
+            this.content = content;
+        }
+
+        @Override
+        public String getKey() {
+            return key;
+        }
+
+        @Override
+        public _MatrixUser getSender() {
+            return sender;
+        }
+
+        @Override
+        public long getTimestamp() {
+            return ts;
+        }
+
+        @Override
+        public String getContent() {
+            return content;
+        }
+
     }
 
 }

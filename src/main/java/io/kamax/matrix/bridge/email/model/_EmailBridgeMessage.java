@@ -20,5 +20,5 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public interface _EmailBridgeMessage extends _BridgeMessage<_EmailClient> {
+public interface _EmailBridgeMessage extends _BridgeMessage<String> {
 }

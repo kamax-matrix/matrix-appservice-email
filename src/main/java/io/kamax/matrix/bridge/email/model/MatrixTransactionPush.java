@@ -20,7 +20,7 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix.hs.event._MatrixEvent;
+import io.kamax.matrix.event._MatrixEvent;
 
 import java.util.List;
 

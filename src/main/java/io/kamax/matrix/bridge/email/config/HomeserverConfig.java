@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-@ConfigurationProperties(prefix = "homeserver")
+@ConfigurationProperties("homeserver")
 public class HomeserverConfig implements InitializingBean {
 
     private Logger log = LoggerFactory.getLogger(HomeserverConfig.class);

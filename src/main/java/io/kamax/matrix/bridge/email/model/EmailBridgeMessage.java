@@ -20,16 +20,33 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public class EmailChannel implements _EmailChannel {
+public class EmailBridgeMessage implements _EmailBridgeMessage {
 
-    @Override
-    public void send(_MatrixBridgeMessage msg) {
+    private _Email email;
+    private long ts = System.currentTimeMillis();
 
+    public EmailBridgeMessage(_Email email) {
+        this.email = email;
     }
 
     @Override
-    public void leave() {
+    public String getKey() {
+        return email.getKey();
+    }
 
+    @Override
+    public String getSender() {
+        return null;
+    }
+
+    @Override
+    public long getTimestamp() {
+        return ts;
+    }
+
+    @Override
+    public String getContent() {
+        return email.getContent();
     }
 
 }

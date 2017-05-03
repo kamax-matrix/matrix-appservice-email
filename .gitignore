@@ -5,5 +5,8 @@ build/
 # Intellij IDEA
 .idea/
 
+# Local files
+application-local.yaml
+
 # Generated files
 registration.yaml

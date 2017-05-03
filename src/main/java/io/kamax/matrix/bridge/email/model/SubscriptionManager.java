@@ -64,6 +64,11 @@ public class SubscriptionManager implements _SubscriptionManager {
     }
 
     @Override
+    public Optional<_BridgeSubscription> get(String roomId, _MatrixBridgeUser mxUser) {
+        return findById(mxUser.getEmail(), roomId, mxUser.getClient().getHomeserver().getDomain());
+    }
+
+    @Override
     public Optional<_BridgeSubscription> get(String emailKey) {
         return Optional.ofNullable(subsEmailKey.get(emailKey));
     }

@@ -30,7 +30,7 @@ import io.kamax.matrix.bridge.email.model.MatrixTransactionPush;
 import io.kamax.matrix.bridge.email.model.RoomQuery;
 import io.kamax.matrix.bridge.email.model.UserQuery;
 import io.kamax.matrix.bridge.email.model._MatrixEmailBridge;
-import io.kamax.matrix.hs.event._MatrixEvent;
+import io.kamax.matrix.event._MatrixEvent;
 import io.kamax.matrix.json.MatrixJsonEventFactory;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;

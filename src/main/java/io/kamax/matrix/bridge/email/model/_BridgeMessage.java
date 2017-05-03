@@ -22,9 +22,11 @@ package io.kamax.matrix.bridge.email.model;
 
 public interface _BridgeMessage<T> {
 
+    String getKey();
+
     T getSender();
 
-    int getTimestamp();
+    long getTimestamp();
 
     String getContent();
 

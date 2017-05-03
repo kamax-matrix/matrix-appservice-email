@@ -20,6 +20,8 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+public interface _EmailListener {
 
-public interface _EmailReader {
+    void process(_Email msg);
+
 }

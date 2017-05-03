@@ -40,6 +40,30 @@ homeserver:
   # Patterns of Room aliases
   aliases: []
 
+
+email:
+  template: "matrix-appservice-email+%KEY%@kamax.io"
+
+  receiver:
+    type: "imap"
+    host: "localhost"
+    port: 993
+    login: "matrix-appservice-email"
+    password: "CHANGE_ME"
+
+  sender:
+    host: "localhost"
+    port: 587
+    # 0 - disable
+    # 1 - enable
+    # 2 - force
+    tls: 1
+    login: "matrix-appservice-email"
+    password: "CHANGE_ME"
+    email: "matrix-appservice-email@localhost"
+    name: "Matrix E-mail Bridge"
+
+
 identity:
   template: "email_%EMAIL%"
   domain: "localhost"
