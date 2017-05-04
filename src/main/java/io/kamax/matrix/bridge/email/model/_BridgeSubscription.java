@@ -32,7 +32,7 @@ public interface _BridgeSubscription {
 
     String getRoomId();
 
-    _EmailClient getEmailClient();
+    _EmailEndPoint getEmailEndpoint();
 
     void forward(_EmailBridgeMessage msg);
 

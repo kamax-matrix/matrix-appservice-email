@@ -20,8 +20,10 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public interface _EmailListener {
+public interface _SubscriptionListener {
 
-    void process(_EmailBridgeMessage msg);
+    void created(_BridgeSubscription sub);
+
+    void destroyed(_BridgeSubscription sub);
 
 }

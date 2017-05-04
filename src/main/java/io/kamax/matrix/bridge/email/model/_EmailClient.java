@@ -24,6 +24,6 @@ public interface _EmailClient {
 
     String getEmail();
 
-    _EmailChannel getChannel(String channelId);
+    _EmailEndPoint getEndpoint(String key);
 
 }

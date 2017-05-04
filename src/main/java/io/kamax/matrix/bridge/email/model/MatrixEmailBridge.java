@@ -21,8 +21,8 @@
 package io.kamax.matrix.bridge.email.model;
 
 import io.kamax.matrix.*;
-import io.kamax.matrix.bridge.email.config.HomeserverConfig;
-import io.kamax.matrix.bridge.email.config.IdentityConfig;
+import io.kamax.matrix.bridge.email.config.matrix.HomeserverConfig;
+import io.kamax.matrix.bridge.email.config.matrix.IdentityConfig;
 import io.kamax.matrix.bridge.email.exception.InvalidHomeserverTokenException;
 import io.kamax.matrix.bridge.email.exception.InvalidMatrixIdException;
 import io.kamax.matrix.bridge.email.exception.NoHomeserverTokenException;

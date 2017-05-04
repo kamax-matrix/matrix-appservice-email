@@ -22,8 +22,8 @@ package io.kamax.matrix.bridge.email.model;
 
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix._MatrixUser;
-import io.kamax.matrix.bridge.email.config.EntityTemplate;
-import io.kamax.matrix.bridge.email.config.HomeserverConfig;
+import io.kamax.matrix.bridge.email.config.matrix.EntityTemplate;
+import io.kamax.matrix.bridge.email.config.matrix.HomeserverConfig;
 import io.kamax.matrix.bridge.email.exception.InvalidMatrixIdException;
 import io.kamax.matrix.bridge.email.exception.RoomNotFoundException;
 import io.kamax.matrix.bridge.email.exception.UserNotFoundException;
@@ -86,6 +86,22 @@ public class MatrixHomeserverEmailBridge implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
+        subMgr.addListener(new _SubscriptionListener() {
+
+            @Override
+            public void created(_BridgeSubscription sub) {
+                log.info("Subscription created for {} in room {}", sub.getEmailEndpoint().getIdentity(), sub.getRoomId());
+
+            }
+
+            @Override
+            public void destroyed(_BridgeSubscription sub) {
+                log.info("Subscription destroyed for {} in room {}", sub.getEmailEndpoint().getIdentity(), sub.getRoomId());
+                sub.getMatrixUser().getRoom(sub.getRoomId()).leave();
+            }
+
+        });
+
         emMgr.addListener(msg -> {
             Optional<_BridgeSubscription> subOpt = subMgr.get(msg.getKey());
             if (!subOpt.isPresent()) {
@@ -94,7 +110,7 @@ public class MatrixHomeserverEmailBridge implements InitializingBean {
                 return;
             }
 
-            subOpt.get().forward(new EmailBridgeMessage(msg));
+            subOpt.get().forward(msg);
             log.info("E-mail with key {} was forwarded", msg.getKey());
         });
 
@@ -124,6 +140,8 @@ public class MatrixHomeserverEmailBridge implements InitializingBean {
             }
 
             String email = emailCodec.decode(mOpt.get().group("email"));
+
+            log.info("Creating new Matrix client for {} as {}", email, mxId);
             _MatrixClient client = new MatrixClient(mxMgr.getHomeserver(), mxMgr.getAccessToken(), mxId);
             return new BridgeUser(client, email);
         }));
@@ -245,38 +263,10 @@ public class MatrixHomeserverEmailBridge implements InitializingBean {
         }
     }
 
-    private class MatrixMessage implements _MatrixBridgeMessage {
+    private class MatrixMessage extends ABridgeMessage<_MatrixUser> implements _MatrixBridgeMessage {
 
-        private String key;
-        private _MatrixUser sender;
-        private long ts;
-        private String content;
-
-        MatrixMessage(String key, _MatrixUser sender, String content) {
-            this.key = key;
-            this.sender = sender;
-            ts = System.currentTimeMillis(); // TODO fetch TS from Matrix event
-            this.content = content;
-        }
-
-        @Override
-        public String getKey() {
-            return key;
-        }
-
-        @Override
-        public _MatrixUser getSender() {
-            return sender;
-        }
-
-        @Override
-        public long getTimestamp() {
-            return ts;
-        }
-
-        @Override
-        public String getContent() {
-            return content;
+        MatrixMessage(String key, _MatrixUser sender, String txtContent) {
+            super(key, sender, Collections.singletonList(new BridgeMessageTextContent(txtContent)));
         }
 
     }

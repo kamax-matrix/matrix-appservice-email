@@ -36,4 +36,6 @@ public interface _SubscriptionManager {
 
     Optional<_BridgeSubscription> remove(String roomId, _MatrixClient mxUser, _EmailClient emClient);
 
+    void addListener(_SubscriptionListener listener);
+
 }

@@ -27,11 +27,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MimeTypeUtils;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -105,6 +107,38 @@ public class EmailReaderSender implements _EmailManager, InitializingBean {
         }
     }
 
+    protected List<_BridgeMessageContent> extractContent(Part p) throws MessagingException, IOException {
+        if (p.isMimeType("multipart/*")) {
+            log.info("Found multipart content, extracting");
+
+            List<_BridgeMessageContent> contents = new ArrayList<>();
+            Multipart mp = (Multipart) p.getContent();
+            int count = mp.getCount();
+            for (int i = 0; i < count; i++) {
+                contents.addAll(extractContent(mp.getBodyPart(i)));
+            }
+            return contents;
+        }
+
+        if (p.isMimeType("message/rfc822")) {
+            log.info("Found nested content, extracting");
+            return extractContent((Part) p.getContent());
+        }
+
+        List<_BridgeMessageContent> contents = new ArrayList<>();
+        if (p.isMimeType(MimeTypeUtils.TEXT_PLAIN_VALUE)) {
+            log.info("Found plain text content");
+            return Collections.singletonList(new BridgeMessageTextContent((String) p.getContent()));
+        }
+
+        if (p.isMimeType(MimeTypeUtils.TEXT_HTML_VALUE)) {
+            log.info("Found HTML content");
+            return Collections.singletonList(new BridgeMessageHtmlContent((String) p.getContent()));
+        }
+
+        return Collections.emptyList();
+    }
+
     @Override
     public void connect() {
         log.info("Connect: start");
@@ -134,14 +168,21 @@ public class EmailReaderSender implements _EmailManager, InitializingBean {
                                         log.info("Received unsupported email");
                                     } else {
                                         String key = m.group(keyGroupName);
-                                        log.info("Got email with key {} with content type {}", key, message.getContentType());
+                                        String sender = ((InternetAddress) message.getFrom()[0]).getAddress(); // TODO sanitize properly
+                                        log.info("Got email with key {} from {}", key, sender);
 
-                                        _Email email = new Email(key, message.getContent().toString());
-                                        for (_EmailListener listener : listeners) {
-                                            try {
-                                                listener.process(email);
-                                            } catch (Throwable t) {
-                                                log.error("Error when dispatching e-mail to listener", t);
+                                        log.info("Getting email content");
+                                        List<_BridgeMessageContent> contents = extractContent(message);
+                                        if (contents.isEmpty()) {
+                                            log.warn("Found no valid content, skipping");
+                                        } else {
+                                            EmailBridgeMessage email = new EmailBridgeMessage(key, sender, contents);
+                                            for (_EmailListener listener : listeners) {
+                                                try {
+                                                    listener.process(email);
+                                                } catch (Throwable t) {
+                                                    log.error("Error when dispatching e-mail to listener", t);
+                                                }
                                             }
                                         }
                                     }
@@ -199,28 +240,6 @@ public class EmailReaderSender implements _EmailManager, InitializingBean {
     @Override
     public _EmailClient getClient(String recipientEmail) {
         return new EmailClient(recipientEmail, send);
-    }
-
-    private class Email implements _Email {
-
-        private String key;
-        private String content;
-
-        Email(String key, String content) {
-            this.key = key;
-            this.content = content;
-        }
-
-        @Override
-        public String getKey() {
-            return key;
-        }
-
-        @Override
-        public String getContent() {
-            return content;
-        }
-
     }
 
 }

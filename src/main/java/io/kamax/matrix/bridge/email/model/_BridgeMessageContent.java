@@ -20,10 +20,10 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public interface _EmailChannel {
+public interface _BridgeMessageContent {
 
-    void send(_MatrixBridgeMessage msg);
+    String getMime();
 
-    void leave();
+    String getContent();
 
 }

@@ -18,32 +18,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.config;
+package io.kamax.matrix.bridge.email.model;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
-
-@Configuration
-@ConfigurationProperties("identity")
-public class IdentityConfig {
-
-    private String template;
-    private String domain;
-
-    public String getTemplate() {
-        return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
-    }
-
-    public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
-    }
+public interface _EmailEndPoint extends _EndPoint<String, _MatrixBridgeMessage> {
 
 }

@@ -23,28 +23,35 @@ package io.kamax.matrix.bridge.email.model;
 import io.kamax.matrix.client._MatrixClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.springframework.util.MimeTypeUtils;
 
+import java.util.Optional;
+
+@Component
+@Scope("prototype")
+@Lazy
 public class BridgeSubscription implements _BridgeSubscription {
 
     private Logger log = LoggerFactory.getLogger(BridgeSubscription.class);
 
     private String roomId;
-    private String emailKey;
     private String matrixKey;
     private _MatrixClient mxUser;
-    private _EmailClient emUser;
+    private _EmailEndPoint emEp;
 
-    public BridgeSubscription(String roomId, String emailKey, String matrixKey, _MatrixClient mxUser, _EmailClient emUser) {
+    public BridgeSubscription(String roomId, String matrixKey, _MatrixClient mxUser, _EmailEndPoint emEp) {
         this.roomId = roomId;
         this.matrixKey = matrixKey;
-        this.emailKey = emailKey;
         this.mxUser = mxUser;
-        this.emUser = emUser;
+        this.emEp = emEp;
     }
 
     @Override
     public String getEmailKey() {
-        return emailKey;
+        return emEp.getId();
     }
 
     @Override
@@ -54,7 +61,7 @@ public class BridgeSubscription implements _BridgeSubscription {
 
     @Override
     public _MatrixClient getMatrixUser() {
-        return null;
+        return mxUser;
     }
 
     @Override
@@ -63,30 +70,43 @@ public class BridgeSubscription implements _BridgeSubscription {
     }
 
     @Override
-    public _EmailClient getEmailClient() {
-        return null;
+    public _EmailEndPoint getEmailEndpoint() {
+        return emEp;
     }
 
     @Override
     public void forward(_EmailBridgeMessage msg) {
-        mxUser.getRoom(roomId).send(msg.getContent());
+        // TODO move into Matrix end point
+        Optional<_BridgeMessageContent> html = msg.getContent(MimeTypeUtils.TEXT_HTML_VALUE);
+        Optional<_BridgeMessageContent> txt = msg.getContent(MimeTypeUtils.TEXT_PLAIN_VALUE);
+        if (!html.isPresent() && !txt.isPresent()) {
+            log.warn("Ignoring E-mail message {} to {}, no valid content", msg.getKey(), emEp.getIdentity());
+        }
+
+        if (html.isPresent() && txt.isPresent()) {
+            log.info("Forwarding formatted e-mail message {} to Matrix for {}", msg.getKey(), emEp.getIdentity());
+            mxUser.getRoom(roomId).sendFormattedText(html.get().getContent(), txt.get().getContent());
+        } else {
+            log.info("Forwarding plain e-mail message {} to Matrix for {}", msg.getKey(), emEp.getIdentity());
+            mxUser.getRoom(roomId).sendText(txt.get().getContent());
+        }
     }
 
     @Override
     public void forward(_MatrixBridgeMessage msg) {
-        emUser.getChannel(emailKey).send(msg);
+        emEp.sendMessage(msg);
     }
 
     @Override
     public void cancelFromMatrix() {
-        log.info("Matrix: Canceling subscription for {} with key {}", emUser.getEmail(), matrixKey);
+        log.info("Matrix: Canceling subscription for {} with key {}", emEp.getIdentity(), matrixKey);
 
-        emUser.getChannel(emailKey).leave();
+        emEp.close();
     }
 
     @Override
     public void cancelFromEmail() {
-        log.info("E-mail: Canceling subscription for {} with key {}", emUser.getEmail(), emailKey);
+        log.info("E-mail: Canceling subscription for {} with key {}", emEp.getIdentity(), emEp.getId());
 
         mxUser.getRoom(roomId).leave();
     }

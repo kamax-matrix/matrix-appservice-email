@@ -18,10 +18,38 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.config.matrix;
 
-public interface _EmailListener {
+import org.springframework.stereotype.Component;
 
-    void process(_EmailBridgeMessage msg);
+@Component
+public class EntityTemplate {
+
+    private boolean exclusive;
+    private String template;
+
+    public boolean isExclusive() {
+        return exclusive;
+    }
+
+    public void setExclusive(boolean exclusive) {
+        this.exclusive = exclusive;
+    }
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(String template) {
+        this.template = template;
+    }
+
+    @Override
+    public String toString() {
+        return "EntityPattern{" +
+                "exclusive=" + exclusive +
+                ", template='" + template + '\'' +
+                '}';
+    }
 
 }

@@ -21,18 +21,22 @@
 package io.kamax.matrix.bridge.email.model;
 
 import io.kamax.matrix.client._MatrixClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Component
 public class SubscriptionManager implements _SubscriptionManager {
 
+    @Autowired
+    private ApplicationContext app;
+
     private Map<String, _BridgeSubscription> subsEmailKey = new HashMap<>();
     private Map<String, _BridgeSubscription> subsMatrixKey = new HashMap<>();
+
+    private List<_SubscriptionListener> listeners = new ArrayList<>();
 
     private String getMatrixKey(String hsDomain, String roomId, String email) {
         return hsDomain + "|" + roomId + "|" + email;
@@ -55,9 +59,13 @@ public class SubscriptionManager implements _SubscriptionManager {
             } while (subsEmailKey.containsKey(emailKey));
 
             String matrixKey = getMatrixKey(mxUser, emUser, roomId);
-            _BridgeSubscription sub = new BridgeSubscription(roomId, emailKey, matrixKey, mxUser, emUser);
+            _BridgeSubscription sub = app.getBean(BridgeSubscription.class, roomId, matrixKey, mxUser, emUser.getEndpoint(emailKey));
             subsEmailKey.put(emailKey, sub);
             subsMatrixKey.put(matrixKey, sub);
+
+            for (_SubscriptionListener listener : listeners) {
+                listener.created(sub);
+            }
 
             return sub;
         });
@@ -73,26 +81,36 @@ public class SubscriptionManager implements _SubscriptionManager {
         return Optional.ofNullable(subsEmailKey.get(emailKey));
     }
 
-    @Override
-    public Optional<_BridgeSubscription> remove(String emailKey) {
-        _BridgeSubscription sub = subsEmailKey.remove(emailKey);
+    private _BridgeSubscription remove(_BridgeSubscription sub) {
         if (sub == null) {
-            return Optional.empty();
+            return null;
         }
 
+        subsEmailKey.remove(sub.getEmailKey());
         subsMatrixKey.remove(sub.getMatrixKey());
-        return Optional.of(sub);
+
+        for (_SubscriptionListener listener : listeners) {
+            listener.destroyed(sub);
+        }
+
+        return sub;
+    }
+
+    @Override
+    public Optional<_BridgeSubscription> remove(String emailKey) {
+        return Optional.ofNullable(remove(subsEmailKey.get(emailKey)));
     }
 
     @Override
     public Optional<_BridgeSubscription> remove(String roomId, _MatrixClient mxUser, _EmailClient emClient) {
-        _BridgeSubscription sub = subsMatrixKey.remove(getMatrixKey(mxUser, emClient, roomId));
-        if (sub == null) {
-            return Optional.empty();
-        }
+        return Optional.ofNullable(remove(subsMatrixKey.get(getMatrixKey(mxUser, emClient, roomId))));
+    }
 
-        subsEmailKey.remove(sub.getEmailKey());
-        return Optional.of(sub);
+    @Override
+    public void addListener(_SubscriptionListener listener) {
+        if (!listeners.contains(listener)) {
+            listeners.add(listener);
+        }
     }
 
 }

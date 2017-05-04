@@ -20,8 +20,22 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public interface _EmailListener {
+public class BridgeMessageHtmlContent implements _BridgeMessageContent {
 
-    void process(_EmailBridgeMessage msg);
+    private String content;
+
+    public BridgeMessageHtmlContent(String content) {
+        this.content = content;
+    }
+
+    @Override
+    public String getMime() {
+        return "text/html";
+    }
+
+    @Override
+    public String getContent() {
+        return content;
+    }
 
 }

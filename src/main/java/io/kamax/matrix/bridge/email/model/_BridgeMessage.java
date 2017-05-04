@@ -20,6 +20,8 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import java.util.Optional;
+
 public interface _BridgeMessage<T> {
 
     String getKey();
@@ -28,6 +30,6 @@ public interface _BridgeMessage<T> {
 
     long getTimestamp();
 
-    String getContent();
+    Optional<_BridgeMessageContent> getContent(String mime);
 
 }

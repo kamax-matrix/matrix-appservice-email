@@ -1,69 +1,184 @@
+# Basic Spring/embedded HTTP server configuration
 server:
+  # HTTP Port to listen to by default
   port: 8091
 
-# HS configuration
-homeserver:
-  # Domain for which this homeserver is authoritative
+  # Domain to which this
+  domain:
+
+
+# Matrix side configuration
+matrix:
+  # Domain that the AS belongs to. Used in a various place when generating Matrix IDs
   domain: "localhost"
 
-  # Host that will be used when connecting to endpoints for this HS.
-  # If this value is commented out or empty, the domain will be used.
-  host: "http://localhost:8008"
+  # Homeserver configuration
+  home:
 
-  # The token used by the AS when communicating with the HS
-  asToken: "MY_SECRET_AS_TOKEN"
+    # Host that will be used when connecting to endpoints for this HS.
+    # If this value is commented out or empty, the domain will be used.
+    host: "http://localhost:8008"
 
-  # The token used by the HS when communicating with the AS
-  hsToken: "MY_SECRET_HS_TOKEN"
+    # The token used by the AS when communicating with the HS
+    asToken: "MY_SECRET_AS_TOKEN"
 
-  # The localpart of the AS global user. The domain will always be the one of the HS
-  localpart: "appservice-email"
+    # The token used by the HS when communicating with the AS
+    hsToken: "MY_SECRET_HS_TOKEN"
 
-  # A list of localpart templates used to generate virtual MXID and produce a regexp for the HS config.
-  #
-  # Values that will be replaced
-  users:
-      # If this pattern is exclusive, used to generate HS config
-    - exclusive: true
+    # The localpart of the AS global user. The domain will always be the one of the HS
+    localpart: "appservice-email"
 
-      # Values that will be replaced:
-      #
-      # %EMAIL%:
-      #   - Will be replaced by the full e-mail address, after doing a transform on the invalid MXID characters
-      #   - Will be replaced by "*" in the generated HS config
-      template: "email_%EMAIL%"
+    # A list of localpart templates used to generate virtual MXID and produce a regexp for the HS config.
+    #
+    # Values that will be replaced
+    users:
+        # If this pattern is exclusive, used to generate HS config
+      - exclusive: true
 
-
-  # Patterns of Room IDs
-  ids: []
-
-  # Patterns of Room aliases
-  aliases: []
+        # Values that will be replaced:
+        #
+        # %EMAIL%:
+        #   - Will be replaced by the full e-mail address, after doing a transform on the invalid MXID characters
+        #   - Will be replaced by "*" in the generated HS config
+        template: "email_%EMAIL%"
 
 
+    # Patterns of Room IDs (placeholder, not used)
+    ids: []
+
+    # Patterns of Room aliases (placeholder, not used)
+    aliases: []
+
+  # Identity server configuration
+  identity:
+
+    # Locapart template to use when generating virtual users.
+    #
+    # Supported token:
+    #   %EMAIL%     Replaced by an identifier representing the e-mail address
+    template: "email_%EMAIL%"
+
+
+# E-mail side configuration
 email:
-  template: "matrix-appservice-email+%KEY%@kamax.io"
 
+  # E-mail template to use to identity which subscription the message belongs to.
+  # This will typically be used in:
+  #  - the 'Reply-To:' header in outgoing e-mail
+  #  - the 'From:' header in incoming e-mail
+  #
+  # Variables that will be replaced:
+  #  - %KEY%    Subscription ID that uniquely identity a bridge user in a room
+  template: "matrix-appservice-email+%KEY%@localhost"
+
+  # E-mail receiver configuration, from where the e-mail will be read to be injected into Matrix
   receiver:
+
+    # Type of connector
+    # Supported values:
+    #  - imap
+    #  - pop3
     type: "imap"
+
+    # Hostname/IP of the e-mail server
     host: "localhost"
+
+    # Port to connect to, mandatory
     port: 993
+
+    # Username for the connection
     login: "matrix-appservice-email"
+
+    # Password for the connection
     password: "CHANGE_ME"
 
+  # E-mail sender configuration, from where the e-mail will be sent when briding events from Matrix
+  # SMTP is the only supported protocol
   sender:
+
+    # Hostname/IP of the e-mail server
     host: "localhost"
+
+    # Port to connect to, mandatory
     port: 587
-    # 0 - disable
-    # 1 - enable
-    # 2 - force
+
+    # TLS mode for the connection.
+    # Possible values:
+    #  0    Disable TLS entirely
+    #  1    Enable TLS if supported by server
+    #  2    Force TLS and fail if not available
     tls: 1
+
+    # Username for the connection
     login: "matrix-appservice-email"
+
+    # Password for the connection
     password: "CHANGE_ME"
+
+    # E-mail address to use in the 'From:' header
     email: "matrix-appservice-email@localhost"
+
+    # Display name to use in the 'From:' header
+    # An empty value will only set the e-mail in the header
     name: "Matrix E-mail Bridge"
 
 
-identity:
-  template: "email_%EMAIL%"
-  domain: "localhost"
+# Subscription management
+subscription:
+
+  notification:
+
+    email:
+
+      # List of body parts to send. An empty list will disable e-mail sending on this event.
+      onCreate:
+          # Type of content. Supported values:
+          #  - text
+          #  - email
+        - type: "text"
+
+          # Location of the header template to use
+          header: "templates/email/header.txt"
+
+          # Location of the footer template to use
+          footer: "templates/email/footer.txt"
+
+          # Location of the content template to use
+          content: "templates/email/onSubCreate-content.txt"
+
+        - type: "html"
+          header: "templates/email/header.html"
+          footer: "templates/email/footer.html"
+          content: "templates/email/onSubCreate-content.html"
+
+      onMute: []
+
+      onDestroy:
+        - type: "text"
+          header: "templates/email/header.txt"
+          footer: "templates/email/footer.txt"
+          content: "templates/email/onSubDestroy-content.txt"
+
+        - type: "html"
+          header: "templates/email/header.html"
+          footer: "templates/email/footer.html"
+          content: "templates/email/onSubDestroy-content.html"
+
+      onMessage:
+        - type: "text"
+          header: "templates/email/header.txt"
+          footer: "templates/email/footer.txt"
+          content: "templates/email/onSubMessage-content.txt"
+          message: "templates/email/onSubMessage-msg.txt"
+
+        - type: "html"
+          header: "templates/email/header.html"
+          footer: "templates/email/footer.html"
+          content: "templates/email/onSubMessage-content.html"
+          message: "templates/email/onSubMessage-msg.html"
+
+    # Only boolean values
+    matrix:
+      # 'onCreate' and 'onMessage' are not supported here
+      onMute: true
+      onDestroy: true

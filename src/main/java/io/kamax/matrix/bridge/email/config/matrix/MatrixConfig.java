@@ -18,37 +18,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.config;
+package io.kamax.matrix.bridge.email.config.matrix;
 
-import org.springframework.stereotype.Component;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-@Component
-public class EntityTemplate {
+@Configuration
+@ConfigurationProperties("matrix")
+public class MatrixConfig {
 
-    private boolean exclusive;
-    private String template;
+    private String domain;
 
-    public boolean isExclusive() {
-        return exclusive;
+    public String getDomain() {
+        return domain;
     }
 
-    public void setExclusive(boolean exclusive) {
-        this.exclusive = exclusive;
+    public void setDomain(String domain) {
+        this.domain = domain;
     }
 
-    public String getTemplate() {
-        return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
-    }
-
-    @Override
-    public String toString() {
-        return "EntityPattern{" +
-                "exclusive=" + exclusive +
-                ", template='" + template + '\'' +
-                '}';
-    }
 }

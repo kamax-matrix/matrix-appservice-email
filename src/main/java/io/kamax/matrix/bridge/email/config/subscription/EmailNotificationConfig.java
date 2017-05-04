@@ -18,10 +18,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.config.subscription;
 
-public interface _EmailListener {
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-    void process(_EmailBridgeMessage msg);
+import java.util.Map;
+import java.util.Optional;
+
+@Configuration
+@ConfigurationProperties("subscription.notification.email")
+public class EmailNotificationConfig {
+
+    private Map<String, EmailTemplate> events;
+
+    public Map<String, EmailTemplate> getEvents() {
+        return events;
+    }
+
+    public void setEvents(Map<String, EmailTemplate> events) {
+        this.events = events;
+    }
+
+    public Optional<EmailTemplate> get(String eventId) {
+        return Optional.ofNullable(events.get(eventId));
+    }
 
 }

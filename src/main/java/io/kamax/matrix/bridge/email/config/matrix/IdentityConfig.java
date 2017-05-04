@@ -18,10 +18,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.config.matrix;
 
-public interface _EmailListener {
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-    void process(_EmailBridgeMessage msg);
+@Configuration
+@ConfigurationProperties("matrix.identity")
+public class IdentityConfig {
+
+    @Autowired
+    private MatrixConfig mxCfg;
+
+    private String template;
+
+    public String getDomain() {
+        return mxCfg.getDomain();
+    }
+
+    public String getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(String template) {
+        this.template = template;
+    }
 
 }

@@ -24,11 +24,16 @@ import com.sun.mail.smtp.SMTPTransport;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.MimeTypeUtils;
 
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Optional;
 
 public class EmailClient implements _EmailClient {
 
@@ -48,22 +53,71 @@ public class EmailClient implements _EmailClient {
     }
 
     @Override
-    public _EmailChannel getChannel(String channelId) {
-        return new Channel(channelId);
+    public _EmailEndPoint getEndpoint(String channelId) {
+        return new EmailEndPoint(channelId);
     }
 
-    private class Channel implements _EmailChannel {
+    private class EmailEndPoint implements _EmailEndPoint {
 
         private String emailKey;
 
-        Channel(String emailKey) {
+        EmailEndPoint(String emailKey) {
             this.emailKey = emailKey;
         }
 
         @Override
-        public void send(_MatrixBridgeMessage mxMsg) {
+        public String getId() {
+            return emailKey;
+        }
+
+        @Override
+        public String getIdentity() {
+            return email;
+        }
+
+        @Override
+        public void open() {
+            // TODO implement me
+            log.warn("Email endpoint open: stub");
+        }
+
+        @Override
+        public void close() {
+            // TODO implement me
+            log.warn("Email endpoint close: stub");
+        }
+
+        @Override
+        public void sendMessage(_MatrixBridgeMessage mxMsg) {
             log.info("Email bridge: sending message from {} to {} - start", mxMsg.getSender(), email);
+
+            Optional<_BridgeMessageContent> html = mxMsg.getContent(MimeTypeUtils.TEXT_HTML_VALUE);
+            Optional<_BridgeMessageContent> txt = mxMsg.getContent(MimeTypeUtils.TEXT_PLAIN_VALUE);
+            if (!html.isPresent() && !txt.isPresent()) {
+                log.warn("Ignoring Matrix message {} to {}, no valid content", mxMsg.getKey(), email);
+            }
+
             try {
+                MimeMultipart body = new MimeMultipart();
+                if (html.isPresent()) {
+                    log.info("Matrix message contains HTML, including");
+
+                    _BridgeMessageContent htmlContent = html.get();
+                    MimeBodyPart part = new MimeBodyPart();
+                    part.setText(htmlContent.getContent(), StandardCharsets.UTF_8.name(), "html");
+                    body.addBodyPart(part);
+                }
+
+                if (txt.isPresent()) {
+                    log.info("Matrix message contains Plain text, including");
+
+                    _BridgeMessageContent txtContent = txt.get();
+                    MimeBodyPart part = new MimeBodyPart();
+                    part.setText(txtContent.getContent(), StandardCharsets.UTF_8.name(), "plain");
+                    body.addBodyPart(part);
+                }
+
+
                 Session session = Session.getInstance(System.getProperties());
                 MimeMessage msg = new MimeMessage(session);
                 msg.setFrom(cfg.getEmail());
@@ -71,7 +125,7 @@ public class EmailClient implements _EmailClient {
                 msg.setSubject("Matrix E-mail bridge - New message");
                 msg.setSentDate(new Date());
                 msg.setHeader("X-Mailer", "matrix-appservice-email");
-                msg.setText(mxMsg.getContent());
+                msg.setContent(body);
                 SMTPTransport transport = (SMTPTransport) session.getTransport("smtp");
                 transport.setStartTLS(cfg.getTls() > 0);
                 transport.setRequireStartTLS(cfg.getTls() > 1);
@@ -91,9 +145,9 @@ public class EmailClient implements _EmailClient {
         }
 
         @Override
-        public void leave() {
+        public void sendNotification(_BridgeEvent ev) {
             // TODO implement me
-            log.warn("Email channel leave: stub");
+            log.warn("Email endpoint send bridge event: stub");
         }
 
     }

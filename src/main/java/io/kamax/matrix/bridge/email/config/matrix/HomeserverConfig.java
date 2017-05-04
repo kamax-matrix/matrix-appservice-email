@@ -18,12 +18,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.config;
+package io.kamax.matrix.bridge.email.config.matrix;
 
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,12 +32,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-@ConfigurationProperties("homeserver")
+@ConfigurationProperties("matrix.home")
 public class HomeserverConfig implements InitializingBean {
 
     private Logger log = LoggerFactory.getLogger(HomeserverConfig.class);
 
-    private String domain;
+    @Autowired
+    private MatrixConfig mxCfg;
+
     private String host;
     private String asToken;
     private String hsToken;
@@ -46,11 +49,7 @@ public class HomeserverConfig implements InitializingBean {
     private List<EntityTemplate> aliases;
 
     public String getDomain() {
-        return domain;
-    }
-
-    public void setDomain(String domain) {
-        this.domain = domain;
+        return mxCfg.getDomain();
     }
 
     public String getHost() {
@@ -124,7 +123,7 @@ public class HomeserverConfig implements InitializingBean {
         }
 
         if (StringUtils.isBlank(host)) {
-            host = "https://" + domain;
+            host = "https://" + getDomain();
         }
 
         log.info("Domain: {}", getDomain());
