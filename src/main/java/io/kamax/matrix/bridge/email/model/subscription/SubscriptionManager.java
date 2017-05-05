@@ -20,6 +20,8 @@
 
 package io.kamax.matrix.bridge.email.model.subscription;
 
+import io.kamax.matrix.bridge.email.dao.BridgeSubscriptionDao;
+import io.kamax.matrix.bridge.email.dao._SubscriptionDao;
 import io.kamax.matrix.bridge.email.model.email._EmailEndPoint;
 import io.kamax.matrix.bridge.email.model.email._EmailManager;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixEndPoint;
@@ -27,19 +29,20 @@ import io.kamax.matrix.bridge.email.model.matrix._MatrixManager;
 import io.kamax.matrix.client._MatrixClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.lang.ref.WeakReference;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @Component
-public class SubscriptionManager implements _SubscriptionManager {
+public class SubscriptionManager implements InitializingBean, _SubscriptionManager {
 
     private Logger log = LoggerFactory.getLogger(SubscriptionManager.class);
+
+    @Autowired
+    private _SubscriptionDao store;
 
     @Autowired
     private _EmailManager emMgr;
@@ -51,7 +54,31 @@ public class SubscriptionManager implements _SubscriptionManager {
     private Map<String, WeakReference<_BridgeSubscription>> subsEmailKey = new HashMap<>();
     private Map<String, WeakReference<_BridgeSubscription>> subsMatrixKey = new HashMap<>();
 
-    private synchronized _BridgeSubscription create(String subId, String email, String threadId, String mxId, String roomId) {
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        List<BridgeSubscriptionDao> daoList = store.list();
+
+        log.info("Loading {} persisted subscriptions", daoList.size());
+
+        for (BridgeSubscriptionDao dao : store.list()) {
+            build(dao.getSubId(), dao.getEmail(), dao.getThreadId(), dao.getMxId(), dao.getRoomId());
+            log.info("Subscription {} loaded", dao.getSubId());
+        }
+    }
+
+    private BridgeSubscriptionDao serialize(_BridgeSubscription sub) {
+        BridgeSubscriptionDao dao = new BridgeSubscriptionDao();
+
+        dao.setSubId(sub.getId());
+        dao.setEmail(sub.getEmailEndpoint().getIdentity());
+        dao.setThreadId(sub.getEmailEndpoint().getChannelId());
+        dao.setMxId(sub.getMatrixEndpoint().getIdentity().getId());
+        dao.setRoomId(sub.getMatrixEndpoint().getChannelId());
+
+        return dao;
+    }
+
+    private synchronized _BridgeSubscription build(String subId, String email, String threadId, String mxId, String roomId) {
         log.info("Creating new subscription {} for email {} with threadId {} and matrix id {} in room {}",
                 subId,
                 email,
@@ -74,6 +101,12 @@ public class SubscriptionManager implements _SubscriptionManager {
         return sub;
     }
 
+    private synchronized _BridgeSubscription create(String subId, String email, String threadId, String mxId, String roomId) {
+        _BridgeSubscription sub = build(subId, email, threadId, mxId, roomId);
+        store.store(serialize(sub));
+        return sub;
+    }
+
     private synchronized _BridgeSubscription remove(_BridgeSubscription sub) {
         if (sub == null) {
             return null;
@@ -83,6 +116,7 @@ public class SubscriptionManager implements _SubscriptionManager {
         subsEmailKey.remove(sub.getEmailKey());
         subsMatrixKey.remove(sub.getMatrixKey());
         subs.remove(sub.getId());
+        store.delete(sub.getId());
 
         return sub;
     }
@@ -129,5 +163,4 @@ public class SubscriptionManager implements _SubscriptionManager {
     public Optional<_BridgeSubscription> getWithMatrixKey(String matrixKey) {
         return validateExisting(matrixKey, subsMatrixKey);
     }
-
 }

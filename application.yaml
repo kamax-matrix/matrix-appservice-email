@@ -126,6 +126,10 @@ email:
 # Subscription management
 subscription:
 
+  storage:
+    sqlite:
+      location: "as-subscriptions.db"
+
   notification:
 
     email:
@@ -182,3 +186,4 @@ subscription:
       # 'onCreate' and 'onMessage' are not supported here
       onMute: true
       onDestroy: true
+

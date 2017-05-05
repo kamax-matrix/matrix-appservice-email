@@ -10,3 +10,5 @@ application-local.yaml
 
 # Generated files
 registration.yaml
+as.db
+as-*.db
