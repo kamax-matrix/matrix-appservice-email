@@ -100,7 +100,7 @@ public class ApplicationServiceController {
     public Object getRoom(
             @RequestParam(name = "access_token", required = false) String accessToken,
             @PathVariable String roomAlias) {
-        log.info("Room {} was requsted by HS", roomAlias);
+        log.info("Room {} was requested by HS", roomAlias);
 
         as.queryRoom(new RoomQuery(roomAlias, accessToken));
 
