@@ -18,19 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
-import org.springframework.stereotype.Component;
+public interface _MatrixManager {
 
-@Component
-public class BridgeEmailCodec {
+    String getKey(String mxId, String roomId);
 
-    public String decode(String emailEncoded) {
-        return emailEncoded.replace("=", "@");
-    }
-
-    public String encode(String email) {
-        return email.replace("@", "=");
-    }
+    _MatrixEndPoint getEndpoint(String mxId, String roomId);
 
 }

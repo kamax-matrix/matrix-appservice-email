@@ -18,19 +18,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.subscription;
 
-public abstract class AHomeserverCall implements _HomeserverCall {
+import io.kamax.matrix.client._MatrixClient;
 
-    private String credentials;
+import java.util.Optional;
 
-    public void setCredentials(String credentials) {
-        this.credentials = credentials;
-    }
+public interface _SubscriptionManager {
 
-    @Override
-    public String getCredentials() {
-        return credentials;
-    }
+    _BridgeSubscription create(String email, String mxId, String roomId);
+
+    _BridgeSubscription getOrCreate(String email, _MatrixClient mxUser, String roomId);
+
+    Optional<_BridgeSubscription> getWithEmailKey(String emailKey);
+
+    Optional<_BridgeSubscription> getWithMatrixKey(String matrixKey);
 
 }

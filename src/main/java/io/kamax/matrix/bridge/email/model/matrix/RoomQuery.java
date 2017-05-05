@@ -18,31 +18,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
-import io.kamax.matrix.event._MatrixEvent;
+public class RoomQuery extends AHomeserverCall {
 
-import java.util.List;
+    private String alias;
 
-public class MatrixTransactionPush extends AHomeserverCall {
-
-    private String id;
-    private List<_MatrixEvent> events;
-
-    public String getId() {
-        return id;
+    public RoomQuery(String alias, String credentials) {
+        this.alias = alias;
+        setCredentials(credentials);
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public List<_MatrixEvent> getEvents() {
-        return events;
-    }
-
-    public void setEvents(List<_MatrixEvent> events) {
-        this.events = events;
+    public String getAlias() {
+        return alias;
     }
 
 }

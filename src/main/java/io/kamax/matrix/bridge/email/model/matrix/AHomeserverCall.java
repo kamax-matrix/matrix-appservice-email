@@ -18,8 +18,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
-public interface _EmailEndPoint extends _EndPoint<String, _MatrixBridgeMessage> {
+public abstract class AHomeserverCall implements _HomeserverCall {
+
+    private String credentials;
+
+    public void setCredentials(String credentials) {
+        this.credentials = credentials;
+    }
+
+    @Override
+    public String getCredentials() {
+        return credentials;
+    }
 
 }

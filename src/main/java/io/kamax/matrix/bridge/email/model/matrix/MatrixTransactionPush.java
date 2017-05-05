@@ -18,33 +18,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
-import io.kamax.matrix.client._MatrixClient;
+import io.kamax.matrix.event._MatrixEvent;
 
-public class BridgeUser implements _MatrixBridgeUser {
+import java.util.List;
 
-    private _MatrixClient client;
-    private String email;
+public class MatrixTransactionPush extends AHomeserverCall {
 
-    public BridgeUser(_MatrixClient client, String email) {
-        this.client = client;
-        this.email = email;
+    private String id;
+    private List<_MatrixEvent> events;
+
+    public String getId() {
+        return id;
     }
 
-    @Override
-    public _MatrixClient getClient() {
-        return client;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    @Override
-    public String getEmail() {
-        return email;
+    public List<_MatrixEvent> getEvents() {
+        return events;
     }
 
-    @Override
-    public boolean is(_MatrixClient client) {
-        return this.client.equals(client);
+    public void setEvents(List<_MatrixEvent> events) {
+        this.events = events;
     }
 
 }

@@ -18,21 +18,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix._MatrixID;
 
-public class UserQuery extends AHomeserverCall {
+public interface _EmailFetcher {
 
-    private _MatrixID mxId;
+    void connect();
 
-    public UserQuery(_MatrixID mxId, String credentials) {
-        this.mxId = mxId;
-        setCredentials(credentials);
-    }
+    void disconnect();
 
-    public _MatrixID getId() {
-        return mxId;
-    }
+    void addListener(_EmailMessageListener listener);
 
 }

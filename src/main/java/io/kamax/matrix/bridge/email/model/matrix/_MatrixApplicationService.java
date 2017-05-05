@@ -18,7 +18,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
 import io.kamax.matrix.ThreePid;
 import io.kamax.matrix.ThreePidMapping;
@@ -29,7 +29,7 @@ import io.kamax.matrix.bridge.email.exception.UserNotFoundException;
 
 import java.util.Optional;
 
-public interface _MatrixEmailBridge {
+public interface _MatrixApplicationService {
 
     _MatrixID getId(String mxId) throws InvalidMatrixIdException;
 

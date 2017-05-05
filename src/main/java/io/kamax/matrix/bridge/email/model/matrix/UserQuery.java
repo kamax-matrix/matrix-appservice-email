@@ -18,7 +18,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
-public interface _EmailBridgeMessage extends _BridgeMessage<String> {
+import io.kamax.matrix._MatrixID;
+
+public class UserQuery extends AHomeserverCall {
+
+    private _MatrixID mxId;
+
+    public UserQuery(_MatrixID mxId, String credentials) {
+        this.mxId = mxId;
+        setCredentials(credentials);
+    }
+
+    public _MatrixID getId() {
+        return mxId;
+    }
+
 }

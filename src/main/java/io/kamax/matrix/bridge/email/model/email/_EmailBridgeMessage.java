@@ -18,14 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.email;
 
-import java.util.List;
+import io.kamax.matrix.bridge.email.model._BridgeMessage;
 
-public class EmailBridgeMessage extends ABridgeMessage<String> implements _EmailBridgeMessage {
-
-    public EmailBridgeMessage(String key, String email, List<_BridgeMessageContent> parts) {
-        super(key, email, parts);
-    }
-
+public interface _EmailBridgeMessage extends _BridgeMessage<String> {
 }

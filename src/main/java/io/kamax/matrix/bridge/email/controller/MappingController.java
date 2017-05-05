@@ -22,7 +22,7 @@ package io.kamax.matrix.bridge.email.controller;
 
 import io.kamax.matrix.ThreePid;
 import io.kamax.matrix.ThreePidMapping;
-import io.kamax.matrix.bridge.email.model._MatrixEmailBridge;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixApplicationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,13 +37,13 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 public class MappingController {
 
     @Autowired
-    private _MatrixEmailBridge bridge;
+    private _MatrixApplicationService as;
 
     @RequestMapping(value = "/_matrix/identity/api/v1/lookup", method = GET)
     ResponseEntity lookup(@RequestParam String medium, @RequestParam String address) {
         ThreePid threePid = new ThreePid(medium, address);
 
-        Optional<ThreePidMapping> mapping = bridge.getMatrixId(threePid);
+        Optional<ThreePidMapping> mapping = as.getMatrixId(threePid);
         if (mapping.isPresent()) {
             return ResponseEntity.ok(ThreePidMappingAnswer.get(mapping.get()));
         } else {

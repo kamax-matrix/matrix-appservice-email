@@ -18,9 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
 import io.kamax.matrix._MatrixUser;
+import io.kamax.matrix.bridge.email.model._BridgeMessage;
 
 public interface _MatrixBridgeMessage extends _BridgeMessage<_MatrixUser> {
 }

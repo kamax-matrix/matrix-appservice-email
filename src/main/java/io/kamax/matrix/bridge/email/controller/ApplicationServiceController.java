@@ -26,10 +26,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.kamax.matrix.MatrixErrorInfo;
 import io.kamax.matrix.bridge.email.exception.*;
-import io.kamax.matrix.bridge.email.model.MatrixTransactionPush;
-import io.kamax.matrix.bridge.email.model.RoomQuery;
-import io.kamax.matrix.bridge.email.model.UserQuery;
-import io.kamax.matrix.bridge.email.model._MatrixEmailBridge;
+import io.kamax.matrix.bridge.email.model.matrix.MatrixTransactionPush;
+import io.kamax.matrix.bridge.email.model.matrix.RoomQuery;
+import io.kamax.matrix.bridge.email.model.matrix.UserQuery;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixApplicationService;
 import io.kamax.matrix.event._MatrixEvent;
 import io.kamax.matrix.json.MatrixJsonEventFactory;
 import org.apache.commons.io.IOUtils;
@@ -53,7 +53,7 @@ public class ApplicationServiceController {
     private Logger log = LoggerFactory.getLogger(ApplicationServiceController.class);
 
     @Autowired
-    private _MatrixEmailBridge bridge;
+    private _MatrixApplicationService as;
 
     private JsonParser jsonParser = new JsonParser();
 
@@ -102,7 +102,7 @@ public class ApplicationServiceController {
             @PathVariable String roomAlias) {
         log.info("Room {} was requsted by HS", roomAlias);
 
-        bridge.queryRoom(new RoomQuery(roomAlias, accessToken));
+        as.queryRoom(new RoomQuery(roomAlias, accessToken));
 
         return EmptyJsonResponse.get();
     }
@@ -113,7 +113,7 @@ public class ApplicationServiceController {
             @PathVariable String mxId) {
         log.info("User {} was requested by HS", mxId);
 
-        bridge.queryUser(new UserQuery(bridge.getId(mxId), accessToken));
+        as.queryUser(new UserQuery(as.getId(mxId), accessToken));
 
         return EmptyJsonResponse.get();
     }
@@ -140,7 +140,7 @@ public class ApplicationServiceController {
             transaction.setId(txnId);
             transaction.setEvents(events);
 
-            bridge.push(transaction);
+            as.push(transaction);
 
             return EmptyJsonResponse.get();
         } catch (IllegalStateException e) {

@@ -18,24 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.subscription;
 
-import io.kamax.matrix.client._MatrixClient;
+public interface _BridgeSubscriptionListener {
 
-import java.util.Optional;
-
-public interface _SubscriptionManager {
-
-    _BridgeSubscription getOrCreate(String roomId, _MatrixClient mxUser, _EmailClient emClient);
-
-    Optional<_BridgeSubscription> get(String roomId, _MatrixBridgeUser mxUser);
-
-    Optional<_BridgeSubscription> get(String emailKey);
-
-    Optional<_BridgeSubscription> remove(String emailKey);
-
-    Optional<_BridgeSubscription> remove(String roomId, _MatrixClient mxUser, _EmailClient emClient);
-
-    void addListener(_SubscriptionListener listener);
+    void terminated(_BridgeSubscription sub);
 
 }

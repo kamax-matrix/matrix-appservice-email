@@ -18,10 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.subscription;
 
-public interface _HomeserverCall {
+import io.kamax.matrix.bridge.email.model.email._EmailEndPoint;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixEndPoint;
 
-    String getCredentials();
+public interface _BridgeSubscription {
+
+    String getId();
+
+    String getEmailKey();
+
+    String getMatrixKey();
+
+    _MatrixEndPoint getMatrixEndpoint();
+
+    _EmailEndPoint getEmailEndpoint();
+
+    void terminate();
+
+    void addListener(_BridgeSubscriptionListener listener);
 
 }

@@ -18,10 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.bridge.email.config.email.EmailReceiverConfig;
-import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
+import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
+import io.kamax.matrix.bridge.email.model.BridgeMessageTextContent;
+import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -39,15 +41,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Component
-public class EmailReaderSender implements _EmailManager, InitializingBean {
+public class EmailFetcher implements _EmailFetcher, InitializingBean {
 
-    private Logger log = LoggerFactory.getLogger(EmailReaderSender.class);
+    private Logger log = LoggerFactory.getLogger(EmailFetcher.class);
 
     @Autowired
     private EmailReceiverConfig recv;
-
-    @Autowired
-    private EmailSenderConfig send;
 
     private final int sleepTime = 1000;
     private final String keyGroupName = "key";
@@ -56,7 +55,7 @@ public class EmailReaderSender implements _EmailManager, InitializingBean {
     private Thread runner;
     private Pattern recvPattern;
 
-    private List<_EmailListener> listeners;
+    private List<_EmailMessageListener> listeners;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -177,9 +176,9 @@ public class EmailReaderSender implements _EmailManager, InitializingBean {
                                             log.warn("Found no valid content, skipping");
                                         } else {
                                             EmailBridgeMessage email = new EmailBridgeMessage(key, sender, contents);
-                                            for (_EmailListener listener : listeners) {
+                                            for (_EmailMessageListener listener : listeners) {
                                                 try {
-                                                    listener.process(email);
+                                                    listener.push(email);
                                                 } catch (Throwable t) {
                                                     log.error("Error when dispatching e-mail to listener", t);
                                                 }
@@ -233,13 +232,8 @@ public class EmailReaderSender implements _EmailManager, InitializingBean {
     }
 
     @Override
-    public void addListener(_EmailListener listener) {
+    public void addListener(_EmailMessageListener listener) {
         listeners.add(listener);
-    }
-
-    @Override
-    public _EmailClient getClient(String recipientEmail) {
-        return new EmailClient(recipientEmail, send);
     }
 
 }

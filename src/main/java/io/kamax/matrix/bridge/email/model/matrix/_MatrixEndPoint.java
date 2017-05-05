@@ -18,12 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
-public interface _EmailClient {
+import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.bridge.email.model._EndPoint;
+import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
 
-    String getEmail();
-
-    _EmailEndPoint getEndpoint(String key);
+public interface _MatrixEndPoint extends _EndPoint<_MatrixID, _EmailBridgeMessage, _MatrixBridgeMessage> {
 
 }

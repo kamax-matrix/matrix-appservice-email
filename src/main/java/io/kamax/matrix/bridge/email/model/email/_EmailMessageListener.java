@@ -18,12 +18,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.email;
 
-public interface _SubscriptionListener {
+public interface _EmailMessageListener {
 
-    void created(_BridgeSubscription sub);
-
-    void destroyed(_BridgeSubscription sub);
+    void push(_EmailBridgeMessage msg);
 
 }

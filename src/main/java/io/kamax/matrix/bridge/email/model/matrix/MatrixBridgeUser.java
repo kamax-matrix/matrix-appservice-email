@@ -18,12 +18,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.matrix;
 
-public interface _Email {
+import io.kamax.matrix.client._MatrixClient;
 
-    String getKey();
+public class MatrixBridgeUser implements _MatrixBridgeUser {
 
-    String getContent();
+    private _MatrixClient client;
+    private String email;
+
+    public MatrixBridgeUser(_MatrixClient client, String email) {
+        this.client = client;
+        this.email = email;
+    }
+
+    @Override
+    public _MatrixClient getClient() {
+        return client;
+    }
+
+    @Override
+    public String getEmail() {
+        return email;
+    }
+
+    @Override
+    public boolean is(_MatrixClient client) {
+        return this.client.equals(client);
+    }
 
 }
