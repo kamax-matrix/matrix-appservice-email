@@ -96,7 +96,7 @@ public class ApplicationServiceController {
         return new MatrixErrorInfo(t);
     }
 
-    @RequestMapping(value = "/rooms/{roomAlias}", method = GET)
+    @RequestMapping(value = "/rooms/{roomAlias:.+}", method = GET)
     public Object getRoom(
             @RequestParam(name = "access_token", required = false) String accessToken,
             @PathVariable String roomAlias) {
@@ -118,7 +118,7 @@ public class ApplicationServiceController {
         return EmptyJsonResponse.get();
     }
 
-    @RequestMapping(value = "/transactions/{txnId}", method = PUT)
+    @RequestMapping(value = "/transactions/{txnId:.+}", method = PUT)
     public Object getTransaction(
             HttpServletRequest request,
             @RequestParam(name = "access_token", required = false) String accessToken,
