@@ -22,6 +22,6 @@ package io.kamax.matrix.bridge.email.model.subscription;
 
 public interface _BridgeSubscriptionListener {
 
-    void terminated(_BridgeSubscription sub);
+    void onTerminate(_BridgeSubscription sub);
 
 }

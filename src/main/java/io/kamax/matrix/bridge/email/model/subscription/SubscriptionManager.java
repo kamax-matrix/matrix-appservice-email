@@ -20,8 +20,10 @@
 
 package io.kamax.matrix.bridge.email.model.subscription;
 
+import io.kamax.matrix.bridge.email.config.subscription.MatrixNotificationConfig;
 import io.kamax.matrix.bridge.email.dao.BridgeSubscriptionDao;
 import io.kamax.matrix.bridge.email.dao._SubscriptionDao;
+import io.kamax.matrix.bridge.email.model._MessageFormatter;
 import io.kamax.matrix.bridge.email.model.email._EmailEndPoint;
 import io.kamax.matrix.bridge.email.model.email._EmailManager;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixEndPoint;
@@ -49,6 +51,12 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
 
     @Autowired
     private _MatrixManager mxMgr;
+
+    @Autowired
+    private _MessageFormatter formatter;
+
+    @Autowired
+    private MatrixNotificationConfig mxNotifCfg;
 
     private Map<String, _BridgeSubscription> subs = new HashMap<>();
     private Map<String, WeakReference<_BridgeSubscription>> subsEmailKey = new HashMap<>();
@@ -91,7 +99,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         String eKey = emMgr.getKey(email, threadId);
         String mKey = mxMgr.getKey(mxId, roomId);
 
-        _BridgeSubscription sub = new BridgeSubscription(subId, eKey, emEp, mKey, mxEp);
+        _BridgeSubscription sub = new BridgeSubscription(subId, formatter, eKey, emEp, mKey, mxEp);
         sub.addListener(this::remove);
 
         subs.put(subId, sub);
@@ -104,6 +112,8 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
     private synchronized _BridgeSubscription create(String subId, String email, String threadId, String mxId, String roomId) {
         _BridgeSubscription sub = build(subId, email, threadId, mxId, roomId);
         store.store(serialize(sub));
+        sub.commence();
+
         return sub;
     }
 
@@ -163,4 +173,5 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
     public Optional<_BridgeSubscription> getWithMatrixKey(String matrixKey) {
         return validateExisting(matrixKey, subsMatrixKey);
     }
+
 }

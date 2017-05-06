@@ -20,36 +20,21 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
+import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import org.springframework.stereotype.Component;
 
-public interface _EndPoint<K, V extends _BridgeMessage, S extends _BridgeMessage> {
+@Component
+public class MessageFormatter implements _MessageFormatter {
 
-    String getId();
-
-    String getChannelId();
-
-    K getIdentity();
-
-    void close();
-
-    void sendMessage(V msg);
-
-    void sendNotification(_SubscriptionEvent ev);
-
-    void addMessageListener(_EndPointMessageListener<S> listener);
-
-    void addStateListener(_EndPointStateListener listener);
-
-    interface _EndPointMessageListener<S> {
-
-        void push(S msg);
-
+    @Override
+    public _EmailBridgeMessage format(_EmailBridgeMessage msg) {
+        return msg;
     }
 
-    interface _EndPointStateListener {
-
-        void closed(_EndPoint ep);
-
+    @Override
+    public _MatrixBridgeMessage format(_MatrixBridgeMessage msg) {
+        return msg;
     }
 
 }

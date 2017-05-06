@@ -21,11 +21,13 @@
 package io.kamax.matrix.bridge.email.model.matrix;
 
 import io.kamax.matrix._MatrixID;
+import io.kamax.matrix.bridge.email.config.subscription.MatrixNotificationConfig;
 import io.kamax.matrix.bridge.email.model.AEndPoint;
-import io.kamax.matrix.bridge.email.model._BridgeEvent;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import io.kamax.matrix.client._MatrixClient;
+import io.kamax.matrix.hs._MatrixRoom;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.MimeTypeUtils;
@@ -37,10 +39,12 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
     private Logger log = LoggerFactory.getLogger(MatrixEndPoint.class);
 
     private _MatrixClient client;
+    private MatrixNotificationConfig notifCfg;
 
-    public MatrixEndPoint(String id, _MatrixClient client, String roomId) {
+    public MatrixEndPoint(String id, _MatrixClient client, String roomId, MatrixNotificationConfig notifCfg) {
         super(id, client.getUserId(), roomId);
         this.client = client;
+        this.notifCfg = notifCfg;
     }
 
     @Override
@@ -48,8 +52,7 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
         client.getRoom(getChannelId()).leave();
     }
 
-    @Override
-    public void sendMessage(_EmailBridgeMessage msg) {
+    protected void sendMessageImpl(_EmailBridgeMessage msg) {
         Optional<_BridgeMessageContent> html = msg.getContent(MimeTypeUtils.TEXT_HTML_VALUE);
         Optional<_BridgeMessageContent> txt = msg.getContent(MimeTypeUtils.TEXT_PLAIN_VALUE);
         if (!html.isPresent() && !txt.isPresent()) {
@@ -66,9 +69,27 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
     }
 
     @Override
-    public void sendNotification(_BridgeEvent ev) {
-        // TODO implement me
-        log.warn("Matrix endpoint send bridge event: stub");
+    protected void sendNotificationImpl(_SubscriptionEvent ev) {
+        if (!notifCfg.get(ev.getType())) {
+            log.info("Subscription event {} has Matrix notification disabled, ignoring", ev.getType());
+            return;
+        }
+
+        _MatrixRoom room = client.getRoom(getChannelId());
+        switch (ev.getType()) {
+            case OnDestroy:
+                room.sendNotice("This user unsubscribed from this room.");
+                room.leave();
+                break;
+            case OnMute:
+                room.sendNotice("This user muted notifications for this room.");
+                break;
+            case OnUnmute:
+                room.sendNotice("This user unmuted notifications for this room.");
+                break;
+            default:
+                log.warn("Unknown subscription event type {}", ev.getType().getId());
+        }
     }
 
     void inject(_MatrixBridgeMessage msg) {

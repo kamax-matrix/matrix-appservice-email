@@ -20,8 +20,13 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public interface _BridgeEvent {
+import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
 
-    String getType();
+public interface _MessageFormatter {
+
+    _EmailBridgeMessage format(_EmailBridgeMessage msg);
+
+    _MatrixBridgeMessage format(_MatrixBridgeMessage msg);
 
 }

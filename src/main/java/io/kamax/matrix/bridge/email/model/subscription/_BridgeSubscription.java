@@ -35,6 +35,8 @@ public interface _BridgeSubscription {
 
     _EmailEndPoint getEmailEndpoint();
 
+    void commence();
+
     void terminate();
 
     void addListener(_BridgeSubscriptionListener listener);

@@ -131,59 +131,57 @@ subscription:
       location: "as-subscriptions.db"
 
   notification:
-
     email:
-
       # List of body parts to send. An empty list will disable e-mail sending on this event.
       onCreate:
-          # Type of content. Supported values:
-          #  - text
-          #  - email
-        - type: "text"
+          # Type of text content. Supported values:
+          #  - plain
+          #  - html
+        - type: "plain"
 
           # Location of the header template to use
-          header: "templates/email/header.txt"
+          header: "classpath:templates/email/header.txt"
 
           # Location of the footer template to use
-          footer: "templates/email/footer.txt"
+          footer: "classpath:templates/email/footer.txt"
 
           # Location of the content template to use
-          content: "templates/email/onSubCreate-content.txt"
+          content: "classpath:templates/email/onSubCreate-content.txt"
 
         - type: "html"
-          header: "templates/email/header.html"
-          footer: "templates/email/footer.html"
-          content: "templates/email/onSubCreate-content.html"
+          header: "classpath:templates/email/header.html"
+          footer: "classpath:templates/email/footer.html"
+          content: "classpath:templates/email/onSubCreate-content.html"
 
       onMute: []
 
+      onUnmute: []
+
       onDestroy:
-        - type: "text"
-          header: "templates/email/header.txt"
-          footer: "templates/email/footer.txt"
-          content: "templates/email/onSubDestroy-content.txt"
+        - type: "plain"
+          header: "classpath:templates/email/header.txt"
+          footer: "classpath:templates/email/footer.txt"
+          content: "classpath:templates/email/onSubDestroy-content.txt"
 
         - type: "html"
-          header: "templates/email/header.html"
-          footer: "templates/email/footer.html"
-          content: "templates/email/onSubDestroy-content.html"
+          header: "classpath:templates/email/header.html"
+          footer: "classpath:templates/email/footer.html"
+          content: "classpath:templates/email/onSubDestroy-content.html"
 
       onMessage:
-        - type: "text"
-          header: "templates/email/header.txt"
-          footer: "templates/email/footer.txt"
-          content: "templates/email/onSubMessage-content.txt"
-          message: "templates/email/onSubMessage-msg.txt"
+        - type: "plain"
+          header: "classpath:templates/email/header.txt"
+          footer: "classpath:templates/email/footer.txt"
+          content: "classpath:templates/email/onSubMessage-content.txt"
 
         - type: "html"
-          header: "templates/email/header.html"
-          footer: "templates/email/footer.html"
-          content: "templates/email/onSubMessage-content.html"
-          message: "templates/email/onSubMessage-msg.html"
+          header: "classpath:templates/email/header.html"
+          footer: "classpath:templates/email/footer.html"
+          content: "classpath:templates/email/onSubMessage-content.html"
 
     # Only boolean values
     matrix:
       # 'onCreate' and 'onMessage' are not supported here
       onMute: true
+      onUnmute: true
       onDestroy: true
-

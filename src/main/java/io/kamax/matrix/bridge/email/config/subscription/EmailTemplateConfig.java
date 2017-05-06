@@ -22,16 +22,14 @@ package io.kamax.matrix.bridge.email.config.subscription;
 
 import org.springframework.stereotype.Component;
 
-import java.io.File;
-
 @Component
-public class EmailTemplate {
+public class EmailTemplateConfig {
 
     private String type;
-    private File header;
-    private File footer;
-    private File content;
-    private File message;
+    private String header;
+    private String footer;
+    private String content;
+    private String message;
 
     public String getType() {
         return type;
@@ -41,35 +39,35 @@ public class EmailTemplate {
         this.type = type;
     }
 
-    public File getHeader() {
+    public String getHeader() {
         return header;
     }
 
-    public void setHeader(File header) {
+    public void setHeader(String header) {
         this.header = header;
     }
 
-    public File getFooter() {
+    public String getFooter() {
         return footer;
     }
 
-    public void setFooter(File footer) {
+    public void setFooter(String footer) {
         this.footer = footer;
     }
 
-    public File getContent() {
+    public String getContent() {
         return content;
     }
 
-    public void setContent(File content) {
+    public void setContent(String content) {
         this.content = content;
     }
 
-    public File getMessage() {
+    public String getMessage() {
         return message;
     }
 
-    public void setMessage(File message) {
+    public void setMessage(String message) {
         this.message = message;
     }
 

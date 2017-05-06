@@ -40,6 +40,9 @@ public class EmailManager implements InitializingBean, _EmailManager {
     private EmailSenderConfig sendCfg;
 
     @Autowired
+    private _EmailTemplateManager templateMgr;
+
+    @Autowired
     private _EmailFetcher fetcher;
 
     private Map<String, EmailEndPoint> endpoints = new HashMap<>();
@@ -66,8 +69,8 @@ public class EmailManager implements InitializingBean, _EmailManager {
 
     private EmailEndPoint createEndpoint(String email, String threadId) {
         String id = getKey(email, threadId);
-        EmailEndPoint ep = new EmailEndPoint(id, email, threadId, sendCfg);
-        ep.addListener(this::destroyEndpoint);
+        EmailEndPoint ep = new EmailEndPoint(id, email, threadId, sendCfg, templateMgr);
+        ep.addStateListener(this::destroyEndpoint);
         endpoints.put(id, ep);
 
         log.info("Created new email endpoint {} for {}", id, email);

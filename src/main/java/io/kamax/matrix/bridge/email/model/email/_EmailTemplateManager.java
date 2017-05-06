@@ -18,38 +18,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model;
+package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
+import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
 
-public interface _EndPoint<K, V extends _BridgeMessage, S extends _BridgeMessage> {
+import java.util.List;
 
-    String getId();
+public interface _EmailTemplateManager {
 
-    String getChannelId();
-
-    K getIdentity();
-
-    void close();
-
-    void sendMessage(V msg);
-
-    void sendNotification(_SubscriptionEvent ev);
-
-    void addMessageListener(_EndPointMessageListener<S> listener);
-
-    void addStateListener(_EndPointStateListener listener);
-
-    interface _EndPointMessageListener<S> {
-
-        void push(S msg);
-
-    }
-
-    interface _EndPointStateListener {
-
-        void closed(_EndPoint ep);
-
-    }
+    List<_EmailTemplate> get(SubscriptionEvents event);
 
 }

@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,8 @@ public abstract class AEndPoint<K, V extends _BridgeMessage, S extends _BridgeMe
     private String id;
     private K identity;
     private String channel;
+
+    private boolean isClosed;
     private List<_EndPointMessageListener<S>> msgListeners = new ArrayList<>();
     private List<_EndPointStateListener> stateListeners = new ArrayList<>();
 
@@ -58,6 +61,34 @@ public abstract class AEndPoint<K, V extends _BridgeMessage, S extends _BridgeMe
         return identity;
     }
 
+    protected boolean isClosed() {
+        return isClosed;
+    }
+
+    protected abstract void sendMessageImpl(V msg);
+
+    @Override
+    public void sendMessage(V msg) {
+        if (isClosed()) {
+            log.info("Ignoring message {}, endpoint {} is closed", msg.getKey(), getId());
+            return;
+        }
+
+        sendMessageImpl(msg);
+    }
+
+    protected abstract void sendNotificationImpl(_SubscriptionEvent ev);
+
+    @Override
+    public void sendNotification(_SubscriptionEvent ev) {
+        if (isClosed()) {
+            log.info("Ignoring subscription event {} notification, endpoint {} is closed", ev.getType(), getId());
+            return;
+        }
+
+        sendNotificationImpl(ev);
+    }
+
     protected abstract void closeImpl();
 
     @Override
@@ -65,17 +96,19 @@ public abstract class AEndPoint<K, V extends _BridgeMessage, S extends _BridgeMe
         log.info("Closing endpoint for user {} in channel {}", getIdentity(), getChannelId());
 
         closeImpl();
+        isClosed = true;
+
         fireClosedEvent();
     }
 
     @Override
-    public void addListener(_EndPointMessageListener<S> listener) {
+    public void addMessageListener(_EndPointMessageListener<S> listener) {
         log.info("Adding message listener to endpoint {}", id);
 
         msgListeners.add(listener);
     }
 
-    public void addListener(_EndPointStateListener listener) {
+    public void addStateListener(_EndPointStateListener listener) {
         log.info("Adding state listener to endpoint {}", id);
 
         stateListeners.add(listener);

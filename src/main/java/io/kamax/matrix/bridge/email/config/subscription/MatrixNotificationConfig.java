@@ -20,27 +20,75 @@
 
 package io.kamax.matrix.bridge.email.config.subscription;
 
+import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import java.util.Map;
 
 @Configuration
 @ConfigurationProperties("subscription.notification.matrix")
 public class MatrixNotificationConfig {
 
-    private Map<String, Boolean> events;
+    private boolean onCreate = false;
+    private boolean onDestroy = false;
+    private boolean onMessage = false;
+    private boolean onMute = false;
+    private boolean onUnmute = false;
 
-    public Map<String, Boolean> getEvents() {
-        return events;
+    public boolean getOnCreate() {
+        return onCreate;
     }
 
-    public void setEvents(Map<String, Boolean> events) {
-        this.events = events;
+    public void setOnCreate(boolean onCreate) {
+        this.onCreate = onCreate;
     }
 
-    public boolean get(String eventId) {
-        return events.getOrDefault(eventId, false);
+    public boolean getOnDestroy() {
+        return onDestroy;
+    }
+
+    public void setOnDestroy(boolean onDestroy) {
+        this.onDestroy = onDestroy;
+    }
+
+    public boolean getOnMessage() {
+        return onMessage;
+    }
+
+    public void setOnMessage(boolean onMessage) {
+        this.onMessage = onMessage;
+    }
+
+    public boolean getOnMute() {
+        return onMute;
+    }
+
+    public void setOnMute(boolean onMute) {
+        this.onMute = onMute;
+    }
+
+    public boolean getOnUnmute() {
+        return onUnmute;
+    }
+
+    public void setOnUnmute(boolean onUnmute) {
+        this.onUnmute = onUnmute;
+    }
+
+    public boolean get(SubscriptionEvents event) {
+        switch (event) {
+            case OnCreate:
+                return getOnCreate();
+            case OnDestroy:
+                return getOnDestroy();
+            case OnMessage:
+                return getOnMessage();
+            case OnMute:
+                return getOnMute();
+            case OnUnmute:
+                return getOnUnmute();
+            default:
+                return false;
+        }
     }
 
 }
