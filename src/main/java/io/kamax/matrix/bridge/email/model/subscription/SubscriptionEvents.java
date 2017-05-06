@@ -24,8 +24,6 @@ public enum SubscriptionEvents {
 
     OnCreate("onCreate"),
     OnMessage("onMessage"),
-    OnMute("onMute"),
-    OnUnmute("onUnmute"),
     OnDestroy("onDestroy");
 
     private String id;

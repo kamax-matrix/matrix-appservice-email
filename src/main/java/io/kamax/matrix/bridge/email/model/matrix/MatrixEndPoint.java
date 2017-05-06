@@ -81,12 +81,6 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
                 room.sendNotice("This user unsubscribed from this room.");
                 room.leave();
                 break;
-            case OnMute:
-                room.sendNotice("This user muted notifications for this room.");
-                break;
-            case OnUnmute:
-                room.sendNotice("This user unmuted notifications for this room.");
-                break;
             default:
                 log.warn("Unknown subscription event type {}", ev.getType().getId());
         }

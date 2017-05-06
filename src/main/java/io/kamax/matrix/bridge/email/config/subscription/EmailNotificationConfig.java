@@ -91,10 +91,6 @@ public class EmailNotificationConfig implements InitializingBean {
                 return getOnDestroy();
             case OnMessage:
                 return getOnMessage();
-            case OnMute:
-                return getOnMute();
-            case OnUnmute:
-                return getOnUnmute();
             default:
                 return Collections.emptyList();
         }

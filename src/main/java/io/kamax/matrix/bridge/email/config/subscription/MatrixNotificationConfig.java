@@ -82,10 +82,6 @@ public class MatrixNotificationConfig {
                 return getOnDestroy();
             case OnMessage:
                 return getOnMessage();
-            case OnMute:
-                return getOnMute();
-            case OnUnmute:
-                return getOnUnmute();
             default:
                 return false;
         }
