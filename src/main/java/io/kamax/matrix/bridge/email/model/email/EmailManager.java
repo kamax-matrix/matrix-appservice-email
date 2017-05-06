@@ -40,7 +40,7 @@ public class EmailManager implements InitializingBean, _EmailManager {
     private EmailSenderConfig sendCfg;
 
     @Autowired
-    private _EmailTemplateManager templateMgr;
+    private _EmailFormatter formatter;
 
     @Autowired
     private _EmailFetcher fetcher;
@@ -69,7 +69,7 @@ public class EmailManager implements InitializingBean, _EmailManager {
 
     private EmailEndPoint createEndpoint(String email, String threadId) {
         String id = getKey(email, threadId);
-        EmailEndPoint ep = new EmailEndPoint(id, email, threadId, sendCfg, templateMgr);
+        EmailEndPoint ep = new EmailEndPoint(id, email, threadId, sendCfg, formatter);
         ep.addStateListener(this::destroyEndpoint);
         endpoints.put(id, ep);
 

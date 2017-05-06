@@ -39,6 +39,7 @@ public class BridgeSubscription implements _BridgeSubscription {
     private _MatrixEndPoint mxEp;
     private _EmailEndPoint emEp;
 
+    private boolean isClosed;
     private List<_BridgeSubscriptionListener> listeners = new ArrayList<>();
 
     public BridgeSubscription(String id, _MessageFormatter formatter, String emKey, _EmailEndPoint emEp, String mxKey, _MatrixEndPoint mxEp) {
@@ -49,13 +50,7 @@ public class BridgeSubscription implements _BridgeSubscription {
         this.emEp = emEp;
 
         mxEp.addMessageListener(msg -> emEp.sendMessage(formatter.format(msg)));
-
         emEp.addMessageListener(msg -> mxEp.sendMessage(formatter.format(msg)));
-    }
-
-    private void sendEvent(_SubscriptionEvent ev) {
-        emEp.sendNotification(ev);
-        mxEp.sendNotification(ev);
     }
 
     @Override
@@ -85,6 +80,10 @@ public class BridgeSubscription implements _BridgeSubscription {
 
     @Override
     public void commence() {
+        if (isClosed) {
+            throw new IllegalStateException();
+        }
+
         log.info("Commencing subscription {} | Matrix - ID: {} - Identity: {} | Email - ID: {} - Identity: {}",
                 id,
                 mxKey,
@@ -92,11 +91,21 @@ public class BridgeSubscription implements _BridgeSubscription {
                 emKey,
                 emEp.getIdentity());
 
-        sendEvent(new SubscriptionEvent(SubscriptionEvents.OnCreate));
+        SubscriptionEvent ev = new SubscriptionEvent(SubscriptionEvents.OnCreate);
+        emEp.sendNotification(ev);
+        mxEp.sendNotification(ev);
     }
 
     @Override
     public void terminate() {
+        synchronized (this) {
+            if (isClosed) {
+                return;
+            }
+
+            isClosed = true;
+        }
+
         log.info("Terminating subscription {} | Matrix - ID: {} - Identity: {} | Email - ID: {} - Identity: {}",
                 id,
                 mxKey,
@@ -104,13 +113,14 @@ public class BridgeSubscription implements _BridgeSubscription {
                 emKey,
                 emEp.getIdentity());
 
+        SubscriptionEvent ev = new SubscriptionEvent(SubscriptionEvents.OnDestroy);
+
         log.info("Closing Matrix endpoint");
-
-        sendEvent(new SubscriptionEvent(SubscriptionEvents.OnDestroy));
-
+        mxEp.sendNotification(ev);
         mxEp.close();
 
         log.info("Closing Email endpoint");
+        emEp.sendNotification(ev);
         emEp.close();
 
         for (_BridgeSubscriptionListener listener : listeners) {

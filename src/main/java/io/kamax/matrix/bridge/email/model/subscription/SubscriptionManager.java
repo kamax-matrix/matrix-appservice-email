@@ -174,4 +174,16 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         return validateExisting(matrixKey, subsMatrixKey);
     }
 
+    @Override
+    public List<_BridgeSubscription> listForEmail(String email) {
+        List<_BridgeSubscription> subList = new ArrayList<>();
+
+        for (_BridgeSubscription sub : subs.values()) {
+            if (sub.getEmailEndpoint().getIdentity().contentEquals(email)) {
+                subList.add(sub);
+            }
+        }
+        return subList;
+    }
+
 }

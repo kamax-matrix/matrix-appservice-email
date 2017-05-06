@@ -1,1 +1,4 @@
 %BODY%
+
+----------
+To manage your subscription(s), visit %MANAGE_URL%

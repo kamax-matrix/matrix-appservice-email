@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Matrix Bridge Service - List of Subscriptions</title>
+    <style>
+        table {
+            border-spacing: 10px;
+        }
+
+
+    </style>
+</head>
+<body>
+<div>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Action</th>
+        </tr>
+        <tr th:each="sub : ${subList}">
+            <td th:text="${sub.getId()}">ID of the Subscription</td>
+            <td th:text="${sub.getName()}">Name of the Subscription</td>
+            <td><a th:href="@{'/subscription/remove?token=' + ${sub.getToken()}}">Unsubscribe</a></td>
+        </tr>
+    </table>
+</div>
+</body>
+</html>

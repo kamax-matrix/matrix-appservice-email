@@ -18,23 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model.subscription;
+package io.kamax.matrix.bridge.email.exception;
 
-import io.kamax.matrix.client._MatrixClient;
+public class InvalidEmailKeyException extends RuntimeException {
 
-import java.util.List;
-import java.util.Optional;
-
-public interface _SubscriptionManager {
-
-    _BridgeSubscription create(String email, String mxId, String roomId);
-
-    _BridgeSubscription getOrCreate(String email, _MatrixClient mxUser, String roomId);
-
-    Optional<_BridgeSubscription> getWithEmailKey(String emailKey);
-
-    Optional<_BridgeSubscription> getWithMatrixKey(String matrixKey);
-
-    List<_BridgeSubscription> listForEmail(String email);
+    public InvalidEmailKeyException() {
+        super("Your token is invalid");
+    }
 
 }

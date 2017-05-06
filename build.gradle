@@ -40,6 +40,7 @@ dependencies {
 
     // Spring Boot - standalone app
     compile 'org.springframework.boot:spring-boot-starter-web:1.5.3.RELEASE'
+    compile "org.springframework.boot:spring-boot-starter-thymeleaf"
 
     compile 'commons-lang:commons-lang:2.6'
 

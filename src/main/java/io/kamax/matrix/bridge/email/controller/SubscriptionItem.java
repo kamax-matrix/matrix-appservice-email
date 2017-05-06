@@ -18,23 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model.subscription;
+package io.kamax.matrix.bridge.email.controller;
 
-import io.kamax.matrix.client._MatrixClient;
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 
-import java.util.List;
-import java.util.Optional;
+public class SubscriptionItem {
 
-public interface _SubscriptionManager {
+    private String id;
+    private String token;
+    private String name;
 
-    _BridgeSubscription create(String email, String mxId, String roomId);
+    public SubscriptionItem(_BridgeSubscription sub) {
+        this.id = sub.getId();
+        this.token = sub.getEmailKey();
+        this.name = sub.getMatrixEndpoint().getChannelId();
+    }
 
-    _BridgeSubscription getOrCreate(String email, _MatrixClient mxUser, String roomId);
+    public String getId() {
+        return id;
+    }
 
-    Optional<_BridgeSubscription> getWithEmailKey(String emailKey);
+    public String getToken() {
+        return token;
+    }
 
-    Optional<_BridgeSubscription> getWithMatrixKey(String matrixKey);
-
-    List<_BridgeSubscription> listForEmail(String email);
+    public String getName() {
+        return name;
+    }
 
 }

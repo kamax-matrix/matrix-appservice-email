@@ -4,7 +4,7 @@ server:
   port: 8091
 
   # Domain to which this
-  domain:
+  domain: "localhost"
 
 
 # Matrix side configuration

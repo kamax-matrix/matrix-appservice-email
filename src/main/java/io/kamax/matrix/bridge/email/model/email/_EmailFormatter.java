@@ -18,23 +18,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model.subscription;
+package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix.client._MatrixClient;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 
-import java.util.List;
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import java.io.IOException;
 import java.util.Optional;
 
-public interface _SubscriptionManager {
+public interface _EmailFormatter {
 
-    _BridgeSubscription create(String email, String mxId, String roomId);
+    MimeMessage get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException;
 
-    _BridgeSubscription getOrCreate(String email, _MatrixClient mxUser, String roomId);
-
-    Optional<_BridgeSubscription> getWithEmailKey(String emailKey);
-
-    Optional<_BridgeSubscription> getWithMatrixKey(String matrixKey);
-
-    List<_BridgeSubscription> listForEmail(String email);
+    Optional<MimeMessage> get(_SubscriptionEvent ev, _EmailEndPoint ep) throws IOException, MessagingException;
 
 }

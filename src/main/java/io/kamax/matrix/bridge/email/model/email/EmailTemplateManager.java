@@ -23,8 +23,6 @@ package io.kamax.matrix.bridge.email.model.email;
 import io.kamax.matrix.bridge.email.config.subscription.EmailNotificationConfig;
 import io.kamax.matrix.bridge.email.config.subscription.EmailTemplateConfig;
 import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -34,8 +32,6 @@ import java.util.*;
 
 @Component
 public class EmailTemplateManager implements InitializingBean, _EmailTemplateManager {
-
-    private Logger log = LoggerFactory.getLogger(EmailTemplateManager.class);
 
     @Autowired
     private ApplicationContext app;
@@ -52,17 +48,9 @@ public class EmailTemplateManager implements InitializingBean, _EmailTemplateMan
         for (SubscriptionEvents ev : SubscriptionEvents.values()) {
             List<_EmailTemplate> t = new ArrayList<>();
             for (EmailTemplateConfig cfg : notifCfg.get(ev)) {
-                log.info("Creating template for {} with type {}", ev, cfg.getType());
                 t.add(app.getBean(EmailTemplate.class, cfg));
             }
             templates.put(ev, t);
-        }
-
-        for (SubscriptionEvents eventId : SubscriptionEvents.values()) {
-            log.info("Templates for {}:", eventId);
-            for (_EmailTemplate template : get(eventId)) {
-                log.info("- Type: {}", template.getType());
-            }
         }
     }
 
