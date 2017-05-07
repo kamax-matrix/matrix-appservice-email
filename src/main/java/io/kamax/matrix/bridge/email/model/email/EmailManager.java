@@ -30,6 +30,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class EmailManager implements InitializingBean, _EmailManager {
@@ -40,7 +41,10 @@ public class EmailManager implements InitializingBean, _EmailManager {
     private EmailSenderConfig sendCfg;
 
     @Autowired
-    private _EmailFormatter formatter;
+    private _EmailFormatterOutbound formatOut;
+
+    @Autowired
+    private _EmailFormatterInbound formatIn;
 
     @Autowired
     private _EmailFetcher fetcher;
@@ -49,9 +53,16 @@ public class EmailManager implements InitializingBean, _EmailManager {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        fetcher.addListener(msg -> {
-            EmailEndPoint ep = endpoints.get(msg.getKey());
+        fetcher.addListener((key, email) -> {
+            Optional<_EmailBridgeMessage> msgOpt = formatIn.get(key, email);
+            if (!msgOpt.isPresent()) {
+                log.info("Inbound formatter did not return anything, skipping");
+            }
+            _EmailBridgeMessage msg = msgOpt.get();
+
+            EmailEndPoint ep = endpoints.get(key);
             if (ep == null) {
+                // TODO implement
                 log.warn("DROP: Received e-mail with invalid key {} from {}", msg.getKey(), msg.getSender());
                 return;
             }
@@ -69,7 +80,7 @@ public class EmailManager implements InitializingBean, _EmailManager {
 
     private EmailEndPoint createEndpoint(String email, String threadId) {
         String id = getKey(email, threadId);
-        EmailEndPoint ep = new EmailEndPoint(id, email, threadId, sendCfg, formatter);
+        EmailEndPoint ep = new EmailEndPoint(id, email, threadId, sendCfg, formatOut);
         ep.addStateListener(this::destroyEndpoint);
         endpoints.put(id, ep);
 

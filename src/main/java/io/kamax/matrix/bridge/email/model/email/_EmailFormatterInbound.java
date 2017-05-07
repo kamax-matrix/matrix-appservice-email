@@ -21,9 +21,10 @@
 package io.kamax.matrix.bridge.email.model.email;
 
 import javax.mail.Message;
+import java.util.Optional;
 
-public interface _EmailMessageListener {
+public interface _EmailFormatterInbound {
 
-    void push(String key, Message msg);
+    Optional<_EmailBridgeMessage> get(String key, Message msg);
 
 }

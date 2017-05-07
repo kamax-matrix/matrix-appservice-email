@@ -45,9 +45,9 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-public class EmailFormatter implements InitializingBean, _EmailFormatter {
+public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterOutbound {
 
-    private Logger log = LoggerFactory.getLogger(EmailFormatter.class);
+    private Logger log = LoggerFactory.getLogger(EmailFormatterOutboud.class);
 
     @Autowired
     private ServerConfig srvCfg;

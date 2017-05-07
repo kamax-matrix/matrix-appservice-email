@@ -49,5 +49,7 @@ dependencies {
 
     compile 'org.xerial:sqlite-jdbc:3.15.1'
 
-    testCompile 'junit:junit:4.12'
+    compile 'org.jsoup:jsoup:1.10.2'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
 }

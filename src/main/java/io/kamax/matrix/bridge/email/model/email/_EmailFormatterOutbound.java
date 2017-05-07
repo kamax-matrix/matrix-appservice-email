@@ -20,10 +20,18 @@
 
 package io.kamax.matrix.bridge.email.model.email;
 
-import javax.mail.Message;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 
-public interface _EmailMessageListener {
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import java.io.IOException;
+import java.util.Optional;
 
-    void push(String key, Message msg);
+public interface _EmailFormatterOutbound {
+
+    MimeMessage get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException;
+
+    Optional<MimeMessage> get(_SubscriptionEvent ev, _EmailEndPoint ep) throws IOException, MessagingException;
 
 }

@@ -41,11 +41,11 @@ public class EmailEndPoint extends AEndPoint<String, _MatrixBridgeMessage, _Emai
     private Logger log = LoggerFactory.getLogger(EmailEndPoint.class);
 
     private EmailSenderConfig cfg;
-    private _EmailFormatter formatter;
+    private _EmailFormatterOutbound formatter;
 
     private Session session;
 
-    public EmailEndPoint(String id, String email, String emailKey, EmailSenderConfig cfg, _EmailFormatter formatter) {
+    public EmailEndPoint(String id, String email, String emailKey, EmailSenderConfig cfg, _EmailFormatterOutbound formatter) {
         super(id, email, emailKey);
         this.cfg = cfg;
         this.formatter = formatter;

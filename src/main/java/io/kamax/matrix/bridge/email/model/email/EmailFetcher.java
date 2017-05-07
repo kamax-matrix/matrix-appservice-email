@@ -21,21 +21,15 @@
 package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.bridge.email.config.email.EmailReceiverConfig;
-import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
-import io.kamax.matrix.bridge.email.model.BridgeMessageTextContent;
-import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.util.MimeTypeUtils;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -91,51 +85,22 @@ public class EmailFetcher implements _EmailFetcher, InitializingBean {
 
     private void doDisconnect() {
         try {
+            log.info("Closing folder {}", folder.getName());
             folder.close(true);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("Error when closing folder", e);
         } finally {
             try {
                 folder = null;
+
+                log.info("Closing store {}", store.getURLName());
                 store.close();
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("Error when closing store", e);
             } finally {
                 store = null;
             }
         }
-    }
-
-    protected List<_BridgeMessageContent> extractContent(Part p) throws MessagingException, IOException {
-        if (p.isMimeType("multipart/*")) {
-            log.info("Found multipart content, extracting");
-
-            List<_BridgeMessageContent> contents = new ArrayList<>();
-            Multipart mp = (Multipart) p.getContent();
-            int count = mp.getCount();
-            for (int i = 0; i < count; i++) {
-                contents.addAll(extractContent(mp.getBodyPart(i)));
-            }
-            return contents;
-        }
-
-        if (p.isMimeType("message/rfc822")) {
-            log.info("Found nested content, extracting");
-            return extractContent((Part) p.getContent());
-        }
-
-        List<_BridgeMessageContent> contents = new ArrayList<>();
-        if (p.isMimeType(MimeTypeUtils.TEXT_PLAIN_VALUE)) {
-            log.info("Found plain text content");
-            return Collections.singletonList(new BridgeMessageTextContent((String) p.getContent()));
-        }
-
-        if (p.isMimeType(MimeTypeUtils.TEXT_HTML_VALUE)) {
-            log.info("Found HTML content");
-            return Collections.singletonList(new BridgeMessageHtmlContent((String) p.getContent()));
-        }
-
-        return Collections.emptyList();
     }
 
     @Override
@@ -159,48 +124,42 @@ public class EmailFetcher implements _EmailFetcher, InitializingBean {
                                     continue;
                                 }
 
-                                Address[] recipients = message.getAllRecipients();
-                                for (Address recipient : recipients) {
-                                    InternetAddress address = (InternetAddress) recipient;
-                                    Matcher m = recvPattern.matcher(address.getAddress());
-                                    if (!m.matches()) {
-                                        log.info("Received unsupported email");
-                                    } else {
-                                        String key = m.group(keyGroupName);
-                                        String sender = ((InternetAddress) message.getFrom()[0]).getAddress(); // TODO sanitize properly
-                                        log.info("Got email with key {} from {}", key, sender);
+                                if (message.getFrom().length > 0) {
+                                    Address[] recipients = message.getAllRecipients();
+                                    for (Address recipient : recipients) {
+                                        InternetAddress address = (InternetAddress) recipient;
+                                        Matcher m = recvPattern.matcher(address.getAddress());
+                                        if (m.matches()) {
+                                            String key = m.group(keyGroupName);
+                                            log.info("Got email with key {}", key);
 
-                                        log.info("Getting email content");
-                                        List<_BridgeMessageContent> contents = extractContent(message);
-                                        if (contents.isEmpty()) {
-                                            log.warn("Found no valid content, skipping");
-                                        } else {
-                                            EmailBridgeMessage email = new EmailBridgeMessage(key, sender, contents);
                                             for (_EmailMessageListener listener : listeners) {
-                                                try {
-                                                    listener.push(email);
-                                                } catch (Throwable t) {
-                                                    log.error("Error when dispatching e-mail to listener", t);
-                                                }
+                                                listener.push(key, message);
                                             }
+
+                                            break;
                                         }
                                     }
-
-                                    message.setFlag(Flags.Flag.DELETED, true);
+                                } else {
+                                    log.info("Received unsupported email: no sender");
                                 }
+
+                                message.setFlag(Flags.Flag.DELETED, true);
                             }
 
                             folder.expunge();
                         }
                     } catch (InterruptedException e) {
                         log.info("Email receiver thread was interrupted");
-                    } catch (MessagingException | IOException e) {
+                    } catch (MessagingException e) {
+                        log.error("Error in e-mail backend: {}", e.getMessage());
                         doDisconnect();
                     }
                 }
 
                 log.info("Email receiver thread: stop");
             });
+
             runner.setName("email-receiver-daemon");
             runner.setDaemon(true);
             runner.start();

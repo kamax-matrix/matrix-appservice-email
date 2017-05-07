@@ -20,18 +20,21 @@
 
 package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
-import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
+import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 
+import javax.mail.Message;
 import javax.mail.MessagingException;
-import javax.mail.internet.MimeMessage;
-import java.io.IOException;
-import java.util.Optional;
+import java.util.List;
+import java.util.regex.Pattern;
 
-public interface _EmailFormatter {
+public interface _EmailClientFormatter {
 
-    MimeMessage get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException;
+    String getId();
 
-    Optional<MimeMessage> get(_SubscriptionEvent ev, _EmailEndPoint ep) throws IOException, MessagingException;
+    boolean matches(Message m) throws MessagingException;
+
+    List<Pattern> getContentPatterns(String subType);
+
+    _BridgeMessageContent format(_BridgeMessageContent content);
 
 }
