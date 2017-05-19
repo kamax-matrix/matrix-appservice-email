@@ -1,6 +1,6 @@
 You have a new message:
 
-    %BODY%
+    %MSG_CONTENT%
 
 ----------
 To manage your subscription(s), visit %MANAGE_URL%

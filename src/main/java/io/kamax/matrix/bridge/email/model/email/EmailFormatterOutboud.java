@@ -22,6 +22,8 @@ package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.bridge.email.config.ServerConfig;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
+import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
+import io.kamax.matrix.bridge.email.model.BridgeMessageTextContent;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
 import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
@@ -40,7 +42,10 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,7 +67,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (templateMgr.get(SubscriptionEvents.OnMessage).isEmpty()) {
+        if (!templateMgr.get(SubscriptionEvents.OnMessage).isPresent()) {
             log.error("Configuration error: template list for onMessage notification event cannot be empty");
             System.exit(1);
         }
@@ -76,114 +81,248 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         return "<div>" + text + "</div>";
     }
 
-    private MimeBodyPart makeEventBodyPart(_EmailEndPoint ep, _EmailTemplate template, String contentBody) throws IOException, MessagingException {
+    private String processToken(TokenData data, String template) {
+        return template
+                .replace(EmailTemplateToken.ManageUrl.getToken(), data.getManageUrl());
+    }
+
+    private String processToken(TokenData data, String template, String content) {
+        return processToken(data, template)
+                .replace(EmailTemplateToken.MsgContent.getToken(), content);
+    }
+
+    private MimeBodyPart makeBodyPart(TokenData data, _EmailTemplateContent template, _BridgeMessageContent content) throws IOException, MessagingException {
         StringBuilder partRaw = new StringBuilder();
 
-        String header = template.getHeader();
-        String footer = template.getFooter();
-        String content = template.getContent().replace("%MANAGE_URL%", getSubscriptionManageLink(ep.getChannelId()));
+        String header = processToken(data, template.getHeader());
+        String footer = processToken(data, template.getFooter());
+        String contentString = processToken(data, template.getContent(), content.getContentAsString());
 
-        content = content.replace("%BODY%", contentBody);
-
-        partRaw.append(header).append(content).append(footer);
+        partRaw.append(header).append(contentString).append(footer);
 
         MimeBodyPart part = new MimeBodyPart();
-        part.setText(partRaw.toString(), StandardCharsets.UTF_8.name(), template.getType());
+        part.setText(partRaw.toString(), StandardCharsets.UTF_8.name(), template.getType().replace("text/", ""));
 
         log.info("Created body part of type {}", template.getType());
 
         return part;
     }
 
-    private MimeMessage makeEmail(_EmailEndPoint ep, String subject, MimeMultipart body, boolean allowReply) throws MessagingException {
+    private MimeMessage makeEmail(TokenData data, _EmailTemplate template, MimeMultipart body, boolean allowReply) throws MessagingException, UnsupportedEncodingException {
         MimeMessage msg = new MimeMessage(session);
         if (allowReply) {
-            msg.setReplyTo(InternetAddress.parse(sendCfg.getTemplate().replace("%KEY%", ep.getChannelId())));
+            msg.setReplyTo(InternetAddress.parse(sendCfg.getTemplate().replace("%KEY%", data.getKey())));
         }
-        msg.setSubject("Matrix E-mail bridge - " + subject);
+
+        msg.setSender(new InternetAddress(sendCfg.getEmail()));
+        msg.setSubject(processToken(data, template.getSubject()));
         msg.setContent(body);
         return msg;
     }
 
-    private MimeMessage makeEmail(_EmailEndPoint ep, List<_EmailTemplate> templates, String title, String txtMsg, String htmlMsg, boolean allowReply) throws IOException, MessagingException {
+    private MimeMessage makeEmail(TokenData data, _EmailTemplate template, List<_BridgeMessageContent> contents, boolean allowReply) throws MessagingException, IOException {
         MimeMultipart body = new MimeMultipart();
         body.setSubType("alternative");
 
-        for (_EmailTemplate template : templates) {
-            if ("plain".contentEquals(template.getType()) && txtMsg != null) {
-                log.info("Got plain template, producing part");
-                body.addBodyPart(makeEventBodyPart(ep, template, txtMsg));
+        for (_BridgeMessageContent content : contents) {
+            Optional<_EmailTemplateContent> contentTemplateOpt = template.getContent(content.getMime());
+            if (!contentTemplateOpt.isPresent()) {
+                continue;
             }
 
-            if ("html".contentEquals(template.getType()) && htmlMsg != null) {
-                log.info("Got html template, producing part");
-                body.addBodyPart(makeEventBodyPart(ep, template, htmlMsg));
-            }
+            body.addBodyPart(makeBodyPart(data, contentTemplateOpt.get(), content));
         }
 
-        return makeEmail(ep, title, body, allowReply);
+        return makeEmail(data, template, body, allowReply);
     }
 
-    private MimeMessage makeEmail(_EmailEndPoint ep, List<_EmailTemplate> templates, String title, String msg, boolean allowReply) throws IOException, MessagingException {
-        return makeEmail(ep, templates, title, msg, getHtml(msg), allowReply);
-    }
+    private MimeMessage makeEmail(TokenData data, _EmailTemplate template, boolean allowReply) throws IOException, MessagingException {
+        List<_BridgeMessageContent> contents = Arrays.asList(
+                new BridgeMessageTextContent(MimeTypeUtils.TEXT_PLAIN_VALUE),
+                new BridgeMessageTextContent(MimeTypeUtils.TEXT_HTML_VALUE)
+        );
 
-    private MimeMessage makeCreateEvent(_EmailEndPoint ep, List<_EmailTemplate> templates) throws IOException, MessagingException {
-        return makeEmail(ep, templates, "New conversation", "You have been invited to a Matrix conversation", true);
-    }
-
-    private MimeMessage makeDestroyEvent(_EmailEndPoint ep, List<_EmailTemplate> templates) throws IOException, MessagingException {
-        return makeEmail(ep, templates, "Conversation terminated", "You have been removed from your Matrix conversation", false);
+        return makeEmail(data, template, contents, allowReply);
     }
 
     @Override
-    public MimeMessage get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException {
-        Optional<_BridgeMessageContent> html = msg.getContent(MimeTypeUtils.TEXT_HTML_VALUE);
-        Optional<_BridgeMessageContent> txt = msg.getContent(MimeTypeUtils.TEXT_PLAIN_VALUE);
-        if (!html.isPresent() && !txt.isPresent()) {
-            log.warn("Ignoring Matrix message {} to {}, no valid content", msg.getKey(), ep.getIdentity());
+    public Optional<MimeMessage> get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException {
+        Optional<_EmailTemplate> templateOpt = templateMgr.get(SubscriptionEvents.OnMessage);
+        if (!templateOpt.isPresent()) {
+            log.info("Ignoring message event {} to {}, no notification set", msg.getKey(), ep.getIdentity());
+            return Optional.empty();
         }
 
-        List<_EmailTemplate> templates = templateMgr.get(SubscriptionEvents.OnMessage);
-        String txtContent = null;
-        String htmlContent = null;
-        if (html.isPresent()) {
-            log.info("Matrix message contains HTML, including");
-
-            htmlContent = html.get().getContent();
-        }
-
-        if (txt.isPresent()) {
-            log.info("Matrix message contains Plain text, including");
-
-            txtContent = txt.get().getContent();
-
-            if (!html.isPresent()) {
-                log.info("Matrix message does not contain HTML, creating from text");
-                htmlContent = getHtml(txtContent);
-            }
-        }
-
-        return makeEmail(ep, templates, "New Message", txtContent, htmlContent, true);
-    }
-
-    @Override
-    public Optional<MimeMessage> get(_SubscriptionEvent ev, _EmailEndPoint ep) throws IOException, MessagingException {
-        List<_EmailTemplate> templates = templateMgr.get(ev.getType());
+        _EmailTemplate template = templateOpt.get();
+        List<_EmailTemplateContent> templates = template.listContents();
         if (templates.isEmpty()) {
             log.info("No template configured for subscription event {}, skipping");
             return Optional.empty();
         }
 
+        Optional<_BridgeMessageContent> txtOpt = msg.getContent(MimeTypeUtils.TEXT_PLAIN_VALUE);
+        Optional<_BridgeMessageContent> htmlOpt = msg.getContent(MimeTypeUtils.TEXT_HTML_VALUE);
+
+        List<_BridgeMessageContent> contents = new ArrayList<>();
+        if (!txtOpt.isPresent()) {
+            if (!htmlOpt.isPresent()) {
+                log.warn("Ignoring Matrix message {} to {}, no valid content", msg.getKey(), ep.getIdentity());
+                return Optional.empty();
+            }
+
+            contents.add(htmlOpt.get());
+        } else {
+            contents.add(txtOpt.get());
+            if (htmlOpt.isPresent()) {
+                contents.add(htmlOpt.get());
+            } else {
+                contents.add(new BridgeMessageHtmlContent(getHtml(txtOpt.get().getContentAsString())));
+            }
+        }
+
+        TokenData tokenData = new TokenData(ep.getChannelId());
+        tokenData.setManageUrl(getSubscriptionManageLink(ep.getChannelId()));
+
+        return Optional.of(makeEmail(tokenData, template, contents, true));
+    }
+
+    @Override
+    public Optional<MimeMessage> get(_SubscriptionEvent ev) throws IOException, MessagingException {
+        Optional<_EmailTemplate> templateOpt = templateMgr.get(ev.getType());
+        if (!templateOpt.isPresent()) {
+            log.info("Ignoring subscription event {} to {}, no notification set", ev.getType(), ev.getSubscription().getEmailEndpoint().getIdentity());
+            return Optional.empty();
+        }
+
+        _EmailTemplate template = templateOpt.get();
+        List<_EmailTemplateContent> templates = template.listContents();
+        if (templates.isEmpty()) {
+            log.info("No template configured for subscription event {}, skipping");
+            return Optional.empty();
+        }
+
+        TokenData tokenData = new TokenData(ev.getSubscription().getEmailEndpoint().getChannelId());
+        tokenData.setManageUrl(getSubscriptionManageLink(ev.getSubscription().getEmailEndpoint().getChannelId()));
+
         switch (ev.getType()) {
             case OnCreate:
-                return Optional.of(makeCreateEvent(ep, templates));
-            case OnDestroy:
-                return Optional.of(makeDestroyEvent(ep, templates));
+                return Optional.of(makeEmail(tokenData, template, true));
             default:
                 log.warn("Unknown subscription event type {}", ev.getType().getId());
-                return Optional.empty();
+                return Optional.of(makeEmail(tokenData, template, false));
         }
     }
 
+    private class TokenData {
+
+        private String key;
+        private String msgTimeHour;
+        private String msgTimeMin;
+        private String msgTimeSec;
+        private String senderName;
+        private String senderAddress;
+        private String senderAvatar;
+        private String receiverAddress;
+        private String room;
+        private String roomName;
+        private String roomAddress;
+        private String manageUrl;
+
+        TokenData(String key) {
+            this.key = key;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getMsgTimeHour() {
+            return msgTimeHour;
+        }
+
+        public void setMsgTimeHour(String msgTimeHour) {
+            this.msgTimeHour = msgTimeHour;
+        }
+
+        public String getMsgTimeMin() {
+            return msgTimeMin;
+        }
+
+        public void setMsgTimeMin(String msgTimeMin) {
+            this.msgTimeMin = msgTimeMin;
+        }
+
+        public String getMsgTimeSec() {
+            return msgTimeSec;
+        }
+
+        public void setMsgTimeSec(String msgTimeSec) {
+            this.msgTimeSec = msgTimeSec;
+        }
+
+        public String getSenderName() {
+            return senderName;
+        }
+
+        public void setSenderName(String senderName) {
+            this.senderName = senderName;
+        }
+
+        public String getSenderAddress() {
+            return senderAddress;
+        }
+
+        public void setSenderAddress(String senderAddress) {
+            this.senderAddress = senderAddress;
+        }
+
+        public String getSenderAvatar() {
+            return senderAvatar;
+        }
+
+        public void setSenderAvatar(String senderAvatar) {
+            this.senderAvatar = senderAvatar;
+        }
+
+        public String getReceiverAddress() {
+            return receiverAddress;
+        }
+
+        public void setReceiverAddress(String receiverAddress) {
+            this.receiverAddress = receiverAddress;
+        }
+
+        public String getRoom() {
+            return room;
+        }
+
+        public void setRoom(String room) {
+            this.room = room;
+        }
+
+        public String getRoomName() {
+            return roomName;
+        }
+
+        public void setRoomName(String roomName) {
+            this.roomName = roomName;
+        }
+
+        public String getRoomAddress() {
+            return roomAddress;
+        }
+
+        public void setRoomAddress(String roomAddress) {
+            this.roomAddress = roomAddress;
+        }
+
+        public String getManageUrl() {
+            return manageUrl;
+        }
+
+        public void setManageUrl(String manageUrl) {
+            this.manageUrl = manageUrl;
+        }
+
+    }
 }

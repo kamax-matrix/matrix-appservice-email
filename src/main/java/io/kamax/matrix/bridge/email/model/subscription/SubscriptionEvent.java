@@ -23,14 +23,21 @@ package io.kamax.matrix.bridge.email.model.subscription;
 public class SubscriptionEvent implements _SubscriptionEvent {
 
     private SubscriptionEvents type;
+    private _BridgeSubscription sub;
 
-    public SubscriptionEvent(SubscriptionEvents type) {
+    public SubscriptionEvent(SubscriptionEvents type, _BridgeSubscription sub) {
         this.type = type;
+        this.sub = sub;
     }
 
     @Override
     public SubscriptionEvents getType() {
         return type;
+    }
+
+    @Override
+    public _BridgeSubscription getSubscription() {
+        return sub;
     }
 
 }

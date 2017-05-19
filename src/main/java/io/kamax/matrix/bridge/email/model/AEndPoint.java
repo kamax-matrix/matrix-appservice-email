@@ -65,6 +65,18 @@ public abstract class AEndPoint<K, V extends _BridgeMessage, S extends _BridgeMe
         return isClosed;
     }
 
+    protected abstract void sendEventImpl(_SubscriptionEvent ev);
+
+    @Override
+    public void sendEvent(_SubscriptionEvent ev) {
+        if (isClosed()) {
+            log.info("Ignoring subscription event {} notification, endpoint {} is closed", ev.getType(), getId());
+            return;
+        }
+
+        sendEventImpl(ev);
+    }
+
     protected abstract void sendMessageImpl(V msg);
 
     @Override
@@ -75,18 +87,6 @@ public abstract class AEndPoint<K, V extends _BridgeMessage, S extends _BridgeMe
         }
 
         sendMessageImpl(msg);
-    }
-
-    protected abstract void sendNotificationImpl(_SubscriptionEvent ev);
-
-    @Override
-    public void sendNotification(_SubscriptionEvent ev) {
-        if (isClosed()) {
-            log.info("Ignoring subscription event {} notification, endpoint {} is closed", ev.getType(), getId());
-            return;
-        }
-
-        sendNotificationImpl(ev);
     }
 
     protected abstract void closeImpl();

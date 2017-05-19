@@ -24,6 +24,8 @@ package io.kamax.matrix.bridge.email.dao;
 public class BridgeSubscriptionDao {
 
     private String subId;
+    private String sourceMxId;
+    private long timestamp;
     private String email;
     private String threadId;
     private String mxId;
@@ -35,6 +37,22 @@ public class BridgeSubscriptionDao {
 
     public void setSubId(String subId) {
         this.subId = subId;
+    }
+
+    public String getSourceMxId() {
+        return sourceMxId;
+    }
+
+    public void setSourceMxId(String sourceMxId) {
+        this.sourceMxId = sourceMxId;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
     }
 
     public String getEmail() {

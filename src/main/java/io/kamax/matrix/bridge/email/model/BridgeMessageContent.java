@@ -18,15 +18,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model.matrix;
+package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix._MatrixID;
-import io.kamax.matrix.bridge.email.model._EndPoint;
-import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
-import io.kamax.matrix.client._MatrixClient;
+import java.nio.charset.StandardCharsets;
 
-public interface _MatrixEndPoint extends _EndPoint<_MatrixID, _EmailBridgeMessage, _MatrixBridgeMessage> {
+public class BridgeMessageContent implements _BridgeMessageContent {
 
-    _MatrixClient getClient();
+    private String mime;
+    private byte[] content;
 
+    public BridgeMessageContent(String mime) {
+        this(mime, new byte[0]);
+    }
+
+    public BridgeMessageContent(String mime, byte[] content) {
+        this.mime = mime;
+        this.content = content;
+    }
+
+    @Override
+    public String getMime() {
+        return mime;
+    }
+
+    @Override
+    public byte[] getContent() {
+        return content;
+    }
+
+    @Override
+    public String getContentAsString() {
+        return new String(getContent(), StandardCharsets.UTF_8);
+    }
 }

@@ -18,15 +18,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model.matrix;
+package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix._MatrixID;
-import io.kamax.matrix.bridge.email.model._EndPoint;
-import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
-import io.kamax.matrix.client._MatrixClient;
+public enum EmailTemplateToken {
 
-public interface _MatrixEndPoint extends _EndPoint<_MatrixID, _EmailBridgeMessage, _MatrixBridgeMessage> {
+    MsgContent("%MSG_CONTENT%"),
+    MsgTimeHour("%MSG_TIME_HOUR%"),
+    MsgTimeMin("%MSG_TIME_MIN%"),
+    MsgTimeSec("%MSG_TIME_SEC%"),
+    SenderName("%SENDER_NAME%"),
+    SenderAddress("%SENDER_ADDRESS%"),
+    SenderAvatar("%SENDER_AVATAR%"),
+    ReceiverAddress("%RECEIVER_ADDRESS%"),
+    Room("%ROOM%"),
+    RoomName("%ROOM_NAME%"),
+    RoomAddress("%ROOM_ADDRESS%"),
 
-    _MatrixClient getClient();
+    ManageUrl("%MANAGE_URL%");
+
+    private String token;
+
+    EmailTemplateToken(String token) {
+        this.token = token;
+    }
+
+    public String getToken() {
+        return token;
+    }
 
 }

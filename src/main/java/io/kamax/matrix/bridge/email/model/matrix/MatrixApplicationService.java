@@ -202,7 +202,8 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             if (!user.is(mgr.getClient())) {
                 log.info("We are a bridge user, registering subscription");
 
-                _BridgeSubscription sub = subMgr.getOrCreate(user.getEmail(), user.getClient(), ev.getRoomId());
+                _MatrixBridgeMessage msg = new MatrixBridgeMessage(ev.getId(), mgr.getClient().getUser(ev.getSender()), "");
+                _BridgeSubscription sub = subMgr.create(msg, user, ev.getRoomId());
                 log.info("Subscription | Matrix key: {} | Email key: {}", sub.getMatrixKey(), sub.getEmailKey());
             }
         }

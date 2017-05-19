@@ -30,8 +30,8 @@ import java.util.Optional;
 
 public interface _EmailFormatterOutbound {
 
-    MimeMessage get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException;
+    Optional<MimeMessage> get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException;
 
-    Optional<MimeMessage> get(_SubscriptionEvent ev, _EmailEndPoint ep) throws IOException, MessagingException;
+    Optional<MimeMessage> get(_SubscriptionEvent ev) throws IOException, MessagingException;
 
 }

@@ -22,6 +22,7 @@ package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.bridge.email.config.subscription.EmailNotificationConfig;
 import io.kamax.matrix.bridge.email.config.subscription.EmailTemplateConfig;
+import io.kamax.matrix.bridge.email.config.subscription.EmailTemplateContentConfig;
 import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,24 +40,30 @@ public class EmailTemplateManager implements InitializingBean, _EmailTemplateMan
     @Autowired
     private EmailNotificationConfig notifCfg;
 
-    private Map<SubscriptionEvents, List<_EmailTemplate>> templates;
+    private Map<SubscriptionEvents, _EmailTemplate> templates;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         templates = new HashMap<>();
 
         for (SubscriptionEvents ev : SubscriptionEvents.values()) {
-            List<_EmailTemplate> t = new ArrayList<>();
-            for (EmailTemplateConfig cfg : notifCfg.get(ev)) {
-                t.add(app.getBean(EmailTemplate.class, cfg));
+            EmailTemplateConfig cfg = notifCfg.get(ev);
+            if (cfg.getContent().isEmpty()) {
+                continue;
             }
-            templates.put(ev, t);
+
+            List<_EmailTemplateContent> t = new ArrayList<>();
+            for (EmailTemplateContentConfig templateCfg : cfg.getContent()) {
+                t.add(app.getBean(_EmailTemplateContent.class, templateCfg));
+            }
+
+            templates.put(ev, app.getBean(_EmailTemplate.class, cfg.getSubject(), t));
         }
     }
 
     @Override
-    public List<_EmailTemplate> get(SubscriptionEvents event) {
-        return templates.getOrDefault(event, Collections.emptyList());
+    public Optional<_EmailTemplate> get(SubscriptionEvents event) {
+        return Optional.ofNullable(templates.get(event));
     }
 
 }

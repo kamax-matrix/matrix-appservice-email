@@ -20,6 +20,8 @@
 
 package io.kamax.matrix.bridge.email.model.subscription;
 
+import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeUser;
 import io.kamax.matrix.client._MatrixClient;
 
 import java.util.List;
@@ -27,9 +29,9 @@ import java.util.Optional;
 
 public interface _SubscriptionManager {
 
-    _BridgeSubscription create(String email, String mxId, String roomId);
+    _BridgeSubscription create(_MatrixBridgeMessage event, _MatrixBridgeUser mxUser, String roomId);
 
-    _BridgeSubscription getOrCreate(String email, _MatrixClient mxUser, String roomId);
+    Optional<_BridgeSubscription> find(String email, _MatrixClient mxUser, String roomId);
 
     Optional<_BridgeSubscription> getWithEmailKey(String emailKey);
 

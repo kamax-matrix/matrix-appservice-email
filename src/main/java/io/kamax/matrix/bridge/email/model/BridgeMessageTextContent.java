@@ -20,22 +20,12 @@
 
 package io.kamax.matrix.bridge.email.model;
 
-public class BridgeMessageTextContent implements _BridgeMessageContent {
+import org.springframework.util.MimeTypeUtils;
 
-    private String content;
+public class BridgeMessageTextContent extends BridgeMessageContent {
 
     public BridgeMessageTextContent(String content) {
-        this.content = content;
-    }
-
-    @Override
-    public String getMime() {
-        return "text/plain";
-    }
-
-    @Override
-    public String getContent() {
-        return content;
+        super(MimeTypeUtils.TEXT_PLAIN_VALUE, content.getBytes());
     }
 
 }

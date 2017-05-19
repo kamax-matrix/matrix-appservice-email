@@ -32,4 +32,8 @@ public class MatrixBridgeMessage extends ABridgeMessage<_MatrixUser> implements 
         super(key, sender, Collections.singletonList(new BridgeMessageTextContent(txtContent)));
     }
 
+    public MatrixBridgeMessage(String key, _MatrixUser sender) {
+        super(key, sender, Collections.emptyList());
+    }
+
 }

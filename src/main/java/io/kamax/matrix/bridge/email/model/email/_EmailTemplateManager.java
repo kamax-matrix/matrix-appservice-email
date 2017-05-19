@@ -22,10 +22,10 @@ package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
 
-import java.util.List;
+import java.util.Optional;
 
 public interface _EmailTemplateManager {
 
-    List<_EmailTemplate> get(SubscriptionEvents event);
+    Optional<_EmailTemplate> get(SubscriptionEvents event);
 
 }

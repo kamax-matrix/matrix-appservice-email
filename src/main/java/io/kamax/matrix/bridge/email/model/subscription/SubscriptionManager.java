@@ -26,6 +26,8 @@ import io.kamax.matrix.bridge.email.dao._SubscriptionDao;
 import io.kamax.matrix.bridge.email.model._MessageFormatter;
 import io.kamax.matrix.bridge.email.model.email._EmailEndPoint;
 import io.kamax.matrix.bridge.email.model.email._EmailManager;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeUser;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixEndPoint;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixManager;
 import io.kamax.matrix.client._MatrixClient;
@@ -69,7 +71,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         log.info("Loading {} persisted subscriptions", daoList.size());
 
         for (BridgeSubscriptionDao dao : store.list()) {
-            build(dao.getSubId(), dao.getEmail(), dao.getThreadId(), dao.getMxId(), dao.getRoomId());
+            build(dao.getSubId(), dao.getSourceMxId(), dao.getTimestamp(), dao.getEmail(), dao.getThreadId(), dao.getMxId(), dao.getRoomId());
             log.info("Subscription {} loaded", dao.getSubId());
         }
     }
@@ -86,7 +88,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         return dao;
     }
 
-    private synchronized _BridgeSubscription build(String subId, String email, String threadId, String mxId, String roomId) {
+    private synchronized _BridgeSubscription build(String subId, String sourceMxId, long timestamp, String email, String threadId, String mxId, String roomId) {
         log.info("Creating new subscription {} for email {} with threadId {} and matrix id {} in room {}",
                 subId,
                 email,
@@ -99,7 +101,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         String eKey = emMgr.getKey(email, threadId);
         String mKey = mxMgr.getKey(mxId, roomId);
 
-        _BridgeSubscription sub = new BridgeSubscription(subId, formatter, eKey, emEp, mKey, mxEp);
+        _BridgeSubscription sub = new BridgeSubscription(subId, sourceMxId, timestamp, formatter, eKey, emEp, mKey, mxEp);
         sub.addListener(this::remove);
 
         subs.put(subId, sub);
@@ -109,8 +111,8 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         return sub;
     }
 
-    private synchronized _BridgeSubscription create(String subId, String email, String threadId, String mxId, String roomId) {
-        _BridgeSubscription sub = build(subId, email, threadId, mxId, roomId);
+    private synchronized _BridgeSubscription create(_MatrixBridgeMessage event, String subId, String email, String threadId, String mxId, String roomId) {
+        _BridgeSubscription sub = build(subId, event.getSender().getId().getId(), event.getTimestamp(), email, threadId, mxId, roomId);
         store.store(serialize(sub));
         sub.commence();
 
@@ -132,7 +134,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
     }
 
     @Override
-    public _BridgeSubscription create(String email, String mxId, String roomId) {
+    public _BridgeSubscription create(_MatrixBridgeMessage event, _MatrixBridgeUser user, String roomId) {
         String subId;
         do {
             subId = UUID.randomUUID().toString();
@@ -140,14 +142,14 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
 
         String threadId = subId.replace("-", "");
 
-        return create(subId, email, threadId, mxId, roomId);
+        return create(event, subId, user.getEmail(), threadId, user.getClient().getUserId().getId(), roomId);
     }
 
     @Override
-    public _BridgeSubscription getOrCreate(String email, _MatrixClient mxUser, String roomId) {
+    public Optional<_BridgeSubscription> find(String email, _MatrixClient mxUser, String roomId) {
         String mxId = mxUser.getUserId().getId();
 
-        return getWithMatrixKey(mxMgr.getKey(mxId, roomId)).orElseGet(() -> create(email, mxId, roomId));
+        return getWithMatrixKey(mxMgr.getKey(mxId, roomId));
     }
 
     private Optional<_BridgeSubscription> validateExisting(String key, Map<String, WeakReference<_BridgeSubscription>> subs) {

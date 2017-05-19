@@ -24,4 +24,6 @@ public interface _SubscriptionEvent {
 
     SubscriptionEvents getType();
 
+    _BridgeSubscription getSubscription();
+
 }

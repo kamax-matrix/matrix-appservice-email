@@ -32,9 +32,9 @@ public interface _EndPoint<K, V extends _BridgeMessage, S extends _BridgeMessage
 
     void close();
 
-    void sendMessage(V msg);
+    void sendEvent(_SubscriptionEvent ev);
 
-    void sendNotification(_SubscriptionEvent ev);
+    void sendMessage(V msg);
 
     void addMessageListener(_EndPointMessageListener<S> listener);
 
