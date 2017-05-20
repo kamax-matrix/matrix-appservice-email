@@ -20,13 +20,13 @@
 
 package io.kamax.matrix.bridge.email.model.subscription;
 
+import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.bridge.email.config.subscription.MatrixNotificationConfig;
 import io.kamax.matrix.bridge.email.dao.BridgeSubscriptionDao;
 import io.kamax.matrix.bridge.email.dao._SubscriptionDao;
 import io.kamax.matrix.bridge.email.model._MessageFormatter;
 import io.kamax.matrix.bridge.email.model.email._EmailEndPoint;
 import io.kamax.matrix.bridge.email.model.email._EmailManager;
-import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeUser;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixEndPoint;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixManager;
@@ -38,6 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.lang.ref.WeakReference;
+import java.time.Instant;
 import java.util.*;
 
 @Component
@@ -71,7 +72,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         log.info("Loading {} persisted subscriptions", daoList.size());
 
         for (BridgeSubscriptionDao dao : store.list()) {
-            build(dao.getSubId(), dao.getSourceMxId(), dao.getTimestamp(), dao.getEmail(), dao.getThreadId(), dao.getMxId(), dao.getRoomId());
+            build(dao.getSubId(), dao.getSourceMxId(), Instant.ofEpochMilli(dao.getTimestamp()), dao.getEmail(), dao.getThreadId(), dao.getMxId(), dao.getRoomId());
             log.info("Subscription {} loaded", dao.getSubId());
         }
     }
@@ -88,7 +89,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         return dao;
     }
 
-    private synchronized _BridgeSubscription build(String subId, String sourceMxId, long timestamp, String email, String threadId, String mxId, String roomId) {
+    private synchronized _BridgeSubscription build(String subId, String sourceMxId, Instant timestamp, String email, String threadId, String mxId, String roomId) {
         log.info("Creating new subscription {} for email {} with threadId {} and matrix id {} in room {}",
                 subId,
                 email,
@@ -111,11 +112,9 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         return sub;
     }
 
-    private synchronized _BridgeSubscription create(_MatrixBridgeMessage event, String subId, String email, String threadId, String mxId, String roomId) {
-        _BridgeSubscription sub = build(subId, event.getSender().getId().getId(), event.getTimestamp(), email, threadId, mxId, roomId);
+    private synchronized _BridgeSubscription create(_MatrixID initiator, Instant time, String subId, String email, String threadId, String mxId, String roomId) {
+        _BridgeSubscription sub = build(subId, initiator.getId(), time, email, threadId, mxId, roomId);
         store.store(serialize(sub));
-        sub.commence();
-
         return sub;
     }
 
@@ -134,7 +133,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
     }
 
     @Override
-    public _BridgeSubscription create(_MatrixBridgeMessage event, _MatrixBridgeUser user, String roomId) {
+    public _BridgeSubscription create(_MatrixID initiator, Instant time, _MatrixBridgeUser user, String roomId) {
         String subId;
         do {
             subId = UUID.randomUUID().toString();
@@ -142,7 +141,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
 
         String threadId = subId.replace("-", "");
 
-        return create(event, subId, user.getEmail(), threadId, user.getClient().getUserId().getId(), roomId);
+        return create(initiator, time, subId, user.getEmail(), threadId, user.getClient().getUserId().getId(), roomId);
     }
 
     @Override

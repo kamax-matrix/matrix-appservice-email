@@ -27,6 +27,13 @@ public interface _BridgeSubscription {
 
     String getId();
 
+    /**
+     * User who initiated the subscription
+     *
+     * @return Matrix ID of the initiator
+     */
+    String getInitiator();
+
     String getEmailKey();
 
     String getMatrixKey();
@@ -38,6 +45,8 @@ public interface _BridgeSubscription {
     void commence();
 
     void terminate();
+
+    void termine(String source, String reason);
 
     void addListener(_BridgeSubscriptionListener listener);
 

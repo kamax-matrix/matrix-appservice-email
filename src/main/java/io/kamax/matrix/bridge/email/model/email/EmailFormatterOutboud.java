@@ -20,6 +20,8 @@
 
 package io.kamax.matrix.bridge.email.model.email;
 
+import io.kamax.matrix.MatrixID;
+import io.kamax.matrix._MatrixUser;
 import io.kamax.matrix.bridge.email.config.ServerConfig;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
 import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
@@ -27,7 +29,10 @@ import io.kamax.matrix.bridge.email.model.BridgeMessageTextContent;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
 import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
+import io.kamax.matrix.client._MatrixClient;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -44,6 +49,9 @@ import javax.mail.internet.MimeMultipart;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,6 +73,10 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
 
     private Session session = Session.getInstance(System.getProperties());
 
+    private DateTimeFormatter hourFormatter = DateTimeFormatter.ofPattern("HH");
+    private DateTimeFormatter minFormatter = DateTimeFormatter.ofPattern("mm");
+    private DateTimeFormatter secFormatter = DateTimeFormatter.ofPattern("ss");
+
     @Override
     public void afterPropertiesSet() throws Exception {
         if (!templateMgr.get(SubscriptionEvents.OnMessage).isPresent()) {
@@ -78,17 +90,27 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     }
 
     private String getHtml(String text) {
-        return "<div>" + text + "</div>";
+        return "<span>" + text + "</span>";
     }
 
     private String processToken(TokenData data, String template) {
-        return template
-                .replace(EmailTemplateToken.ManageUrl.getToken(), data.getManageUrl());
+        template = StringUtils.replace(template, EmailTemplateToken.ManageUrl.getToken(), data.getManageUrl());
+        template = StringUtils.replace(template, EmailTemplateToken.MsgTimeHour.getToken(), data.getTimeHour());
+        template = StringUtils.replace(template, EmailTemplateToken.MsgTimeMin.getToken(), data.getTimeMin());
+        template = StringUtils.replace(template, EmailTemplateToken.MsgTimeSec.getToken(), data.getTimeSec());
+        template = StringUtils.replace(template, EmailTemplateToken.ReceiverAddress.getToken(), data.getReceiverAddress());
+        template = StringUtils.replace(template, EmailTemplateToken.SenderAddress.getToken(), data.getSenderAddress());
+        template = StringUtils.replace(template, EmailTemplateToken.SenderName.getToken(), data.getSenderName());
+        template = StringUtils.replace(template, EmailTemplateToken.SenderAvatar.getToken(), data.getSenderAvatar());
+        template = StringUtils.replace(template, EmailTemplateToken.RoomAddress.getToken(), data.getRoomAddress());
+        template = StringUtils.replace(template, EmailTemplateToken.RoomName.getToken(), data.getRoomName());
+        template = StringUtils.replace(template, EmailTemplateToken.Room.getToken(), data.getRoom());
+
+        return template;
     }
 
     private String processToken(TokenData data, String template, String content) {
-        return processToken(data, template)
-                .replace(EmailTemplateToken.MsgContent.getToken(), content);
+        return StringUtils.replace(processToken(data, template), EmailTemplateToken.MsgContent.getToken(), content);
     }
 
     private MimeBodyPart makeBodyPart(TokenData data, _EmailTemplateContent template, _BridgeMessageContent content) throws IOException, MessagingException {
@@ -114,7 +136,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             msg.setReplyTo(InternetAddress.parse(sendCfg.getTemplate().replace("%KEY%", data.getKey())));
         }
 
-        msg.setSender(new InternetAddress(sendCfg.getEmail()));
+        msg.setFrom(new InternetAddress(sendCfg.getEmail(), data.getSenderName(), StandardCharsets.UTF_8.name()));
         msg.setSubject(processToken(data, template.getSubject()));
         msg.setContent(body);
         return msg;
@@ -146,10 +168,10 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     }
 
     @Override
-    public Optional<MimeMessage> get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException {
+    public Optional<MimeMessage> get(_BridgeSubscription sub, _MatrixBridgeMessage msg) throws IOException, MessagingException {
         Optional<_EmailTemplate> templateOpt = templateMgr.get(SubscriptionEvents.OnMessage);
         if (!templateOpt.isPresent()) {
-            log.info("Ignoring message event {} to {}, no notification set", msg.getKey(), ep.getIdentity());
+            log.info("Ignoring message event {} to {}, no notification set", msg.getKey(), sub.getEmailEndpoint().getIdentity());
             return Optional.empty();
         }
 
@@ -166,7 +188,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         List<_BridgeMessageContent> contents = new ArrayList<>();
         if (!txtOpt.isPresent()) {
             if (!htmlOpt.isPresent()) {
-                log.warn("Ignoring Matrix message {} to {}, no valid content", msg.getKey(), ep.getIdentity());
+                log.warn("Ignoring Matrix message {} to {}, no valid content", msg.getKey(), sub.getEmailEndpoint().getIdentity());
                 return Optional.empty();
             }
 
@@ -180,8 +202,20 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             }
         }
 
-        TokenData tokenData = new TokenData(ep.getChannelId());
-        tokenData.setManageUrl(getSubscriptionManageLink(ep.getChannelId()));
+        _MatrixClient mxClient = sub.getMatrixEndpoint().getClient();
+        _MatrixUser userSource = msg.getSender();
+        LocalDateTime ldt = LocalDateTime.ofInstant(msg.getTime(), ZoneOffset.systemDefault());
+        TokenData tokenData = new TokenData(sub.getEmailEndpoint().getChannelId());
+        tokenData.setManageUrl(getSubscriptionManageLink(sub.getEmailEndpoint().getChannelId()));
+        tokenData.setTimeHour(ldt.format(hourFormatter));
+        tokenData.setTimeMin(ldt.format(minFormatter));
+        tokenData.setTimeSec(ldt.format(secFormatter));
+        tokenData.setSenderAddress(userSource.getId().getId());
+        tokenData.setSenderName(userSource.getName().orElse(userSource.getId().getId()));
+        tokenData.setReceiverAddress(sub.getEmailEndpoint().getIdentity());
+        tokenData.setRoomAddress(sub.getMatrixEndpoint().getChannelId());
+        tokenData.setRoomName(mxClient.getRoom(tokenData.getRoomAddress()).getName().orElse(""));
+        tokenData.setRoom(StringUtils.defaultIfBlank(tokenData.getRoomName(), tokenData.getRoomAddress()));
 
         return Optional.of(makeEmail(tokenData, template, contents, true));
     }
@@ -201,8 +235,20 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             return Optional.empty();
         }
 
+        _MatrixClient mxClient = ev.getSubscription().getMatrixEndpoint().getClient();
+        _MatrixUser userSource = mxClient.getUser(new MatrixID(ev.getInitiator()));
+        LocalDateTime ldt = LocalDateTime.ofInstant(ev.getTime(), ZoneOffset.systemDefault());
         TokenData tokenData = new TokenData(ev.getSubscription().getEmailEndpoint().getChannelId());
         tokenData.setManageUrl(getSubscriptionManageLink(ev.getSubscription().getEmailEndpoint().getChannelId()));
+        tokenData.setTimeHour(ldt.format(hourFormatter));
+        tokenData.setTimeMin(ldt.format(minFormatter));
+        tokenData.setTimeSec(ldt.format(secFormatter));
+        tokenData.setSenderAddress(userSource.getId().getId());
+        tokenData.setSenderName(userSource.getName().orElse(userSource.getId().getId()));
+        tokenData.setReceiverAddress(ev.getSubscription().getEmailEndpoint().getIdentity());
+        tokenData.setRoomAddress(ev.getSubscription().getMatrixEndpoint().getChannelId());
+        tokenData.setRoomName(mxClient.getRoom(tokenData.getRoomAddress()).getName().orElse(""));
+        tokenData.setRoom(StringUtils.defaultIfBlank(tokenData.getRoomName(), tokenData.getRoomAddress()));
 
         switch (ev.getType()) {
             case OnCreate:
@@ -216,9 +262,9 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     private class TokenData {
 
         private String key;
-        private String msgTimeHour;
-        private String msgTimeMin;
-        private String msgTimeSec;
+        private String timeHour;
+        private String timeMin;
+        private String timeSec;
         private String senderName;
         private String senderAddress;
         private String senderAvatar;
@@ -232,97 +278,98 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             this.key = key;
         }
 
-        public String getKey() {
+        String getKey() {
             return key;
         }
 
-        public String getMsgTimeHour() {
-            return msgTimeHour;
+        String getTimeHour() {
+            return timeHour;
         }
 
-        public void setMsgTimeHour(String msgTimeHour) {
-            this.msgTimeHour = msgTimeHour;
+        void setTimeHour(String timeHour) {
+            this.timeHour = timeHour;
         }
 
-        public String getMsgTimeMin() {
-            return msgTimeMin;
+        String getTimeMin() {
+            return timeMin;
         }
 
-        public void setMsgTimeMin(String msgTimeMin) {
-            this.msgTimeMin = msgTimeMin;
+        void setTimeMin(String timeMin) {
+            this.timeMin = timeMin;
         }
 
-        public String getMsgTimeSec() {
-            return msgTimeSec;
+        String getTimeSec() {
+            return timeSec;
         }
 
-        public void setMsgTimeSec(String msgTimeSec) {
-            this.msgTimeSec = msgTimeSec;
+        void setTimeSec(String timeSec) {
+            this.timeSec = timeSec;
         }
 
-        public String getSenderName() {
+        String getSenderName() {
             return senderName;
         }
 
-        public void setSenderName(String senderName) {
+        void setSenderName(String senderName) {
             this.senderName = senderName;
         }
 
-        public String getSenderAddress() {
+        String getSenderAddress() {
             return senderAddress;
         }
 
-        public void setSenderAddress(String senderAddress) {
+        void setSenderAddress(String senderAddress) {
             this.senderAddress = senderAddress;
         }
 
-        public String getSenderAvatar() {
+        String getSenderAvatar() {
             return senderAvatar;
         }
 
-        public void setSenderAvatar(String senderAvatar) {
+        void setSenderAvatar(String senderAvatar) {
             this.senderAvatar = senderAvatar;
         }
 
-        public String getReceiverAddress() {
+        String getReceiverAddress() {
             return receiverAddress;
         }
 
-        public void setReceiverAddress(String receiverAddress) {
+        void setReceiverAddress(String receiverAddress) {
             this.receiverAddress = receiverAddress;
         }
 
-        public String getRoom() {
+        String getRoom() {
             return room;
         }
 
-        public void setRoom(String room) {
+        void setRoom(String room) {
             this.room = room;
         }
 
-        public String getRoomName() {
+        String getRoomName() {
             return roomName;
         }
 
-        public void setRoomName(String roomName) {
+        void setRoomName(String roomName) {
             this.roomName = roomName;
         }
 
-        public String getRoomAddress() {
+        String getRoomAddress() {
             return roomAddress;
         }
 
-        public void setRoomAddress(String roomAddress) {
+        void setRoomAddress(String roomAddress) {
             this.roomAddress = roomAddress;
         }
 
-        public String getManageUrl() {
+        String getManageUrl() {
             return manageUrl;
         }
 
-        public void setManageUrl(String manageUrl) {
+        void setManageUrl(String manageUrl) {
             this.manageUrl = manageUrl;
         }
 
     }
+
 }

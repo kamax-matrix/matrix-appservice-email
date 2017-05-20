@@ -102,7 +102,7 @@ public class EmailFormatterInbound implements _EmailFormatterInbound {
                 }
             }
 
-            return Optional.of(new EmailBridgeMessage(key, sender, contents));
+            return Optional.of(new EmailBridgeMessage(key, msg.getSentDate().toInstant(), sender, contents));
         } catch (IOException | MessagingException e) {
             throw new RuntimeException(e);
         }

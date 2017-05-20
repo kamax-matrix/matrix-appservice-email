@@ -25,6 +25,7 @@ import io.kamax.matrix.bridge.email.config.subscription.MatrixNotificationConfig
 import io.kamax.matrix.bridge.email.model.AEndPoint;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import io.kamax.matrix.client._MatrixClient;
 import io.kamax.matrix.hs._MatrixRoom;
@@ -70,7 +71,7 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
         client.getRoom(getChannelId()).leave();
     }
 
-    protected void sendMessageImpl(_EmailBridgeMessage msg) {
+    protected void sendMessageImpl(_BridgeSubscription sub, _EmailBridgeMessage msg) {
         Optional<_BridgeMessageContent> html = msg.getContent(MimeTypeUtils.TEXT_HTML_VALUE);
         Optional<_BridgeMessageContent> txt = msg.getContent(MimeTypeUtils.TEXT_PLAIN_VALUE);
         if (!html.isPresent() && !txt.isPresent()) {
@@ -96,4 +97,5 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
     public _MatrixClient getClient() {
         return client;
     }
+
 }

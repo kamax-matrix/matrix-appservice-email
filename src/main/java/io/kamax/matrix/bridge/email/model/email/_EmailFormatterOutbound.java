@@ -21,6 +21,7 @@
 package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 
 import javax.mail.MessagingException;
@@ -30,7 +31,7 @@ import java.util.Optional;
 
 public interface _EmailFormatterOutbound {
 
-    Optional<MimeMessage> get(_MatrixBridgeMessage msg, _EmailEndPoint ep) throws IOException, MessagingException;
+    Optional<MimeMessage> get(_BridgeSubscription sub, _MatrixBridgeMessage msg) throws IOException, MessagingException;
 
     Optional<MimeMessage> get(_SubscriptionEvent ev) throws IOException, MessagingException;
 

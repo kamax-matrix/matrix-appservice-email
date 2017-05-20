@@ -169,9 +169,8 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             }
 
             MatrixEndPoint ep = mgr.getEndpoint(user.getId(), ev.getRoomId());
-
             log.info("Injecting message {} from room {} to {}", ev.getId(), ev.getRoomId(), user);
-            ep.inject(new MatrixBridgeMessage(ev.getId(), mgr.getClient().getUser(ev.getSender()), ev.getBody()));
+            ep.inject(new MatrixBridgeMessage(ev.getId(), ev.getTime(), mgr.getClient().getUser(ev.getSender()), ev.getBody()));
         }
     }
 
@@ -191,6 +190,9 @@ public class MatrixApplicationService implements _MatrixApplicationService {
         _MatrixRoom room = user.getClient().getRoom(ev.getRoomId());
 
         if (RoomMembership.Invite.is(ev.getMembership())) {
+            _BridgeSubscription sub = subMgr.create(ev.getSender(), ev.getTime(), user, ev.getRoomId());
+            log.info("Subscription | Matrix key: {} | Email key: {}", sub.getMatrixKey(), sub.getEmailKey());
+
             log.info("Joining room {} on {} as {}", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
 
             room.join();
@@ -202,9 +204,14 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             if (!user.is(mgr.getClient())) {
                 log.info("We are a bridge user, registering subscription");
 
-                _MatrixBridgeMessage msg = new MatrixBridgeMessage(ev.getId(), mgr.getClient().getUser(ev.getSender()), "");
-                _BridgeSubscription sub = subMgr.create(msg, user, ev.getRoomId());
-                log.info("Subscription | Matrix key: {} | Email key: {}", sub.getMatrixKey(), sub.getEmailKey());
+                Optional<_BridgeSubscription> subOpt = subMgr.getWithMatrixKey(mgr.getKey(user.getClient().getUserId().getId(), ev.getRoomId()));
+                if (!subOpt.isPresent()) {
+                    log.info("Joined room without a subscription, leaving");
+                    user.getClient().getRoom(ev.getRoomId()).leave();
+                } else {
+                    log.info("Starting subscription {}", subOpt.get().getId());
+                    subOpt.get().commence();
+                }
             }
         }
 

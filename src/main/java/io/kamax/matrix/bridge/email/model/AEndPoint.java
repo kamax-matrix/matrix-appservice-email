@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,16 +78,16 @@ public abstract class AEndPoint<K, V extends _BridgeMessage, S extends _BridgeMe
         sendEventImpl(ev);
     }
 
-    protected abstract void sendMessageImpl(V msg);
+    protected abstract void sendMessageImpl(_BridgeSubscription sub, V msg);
 
     @Override
-    public void sendMessage(V msg) {
+    public void sendMessage(_BridgeSubscription sub, V msg) {
         if (isClosed()) {
             log.info("Ignoring message {}, endpoint {} is closed", msg.getKey(), getId());
             return;
         }
 
-        sendMessageImpl(msg);
+        sendMessageImpl(sub, msg);
     }
 
     protected abstract void closeImpl();

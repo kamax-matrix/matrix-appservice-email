@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +29,13 @@ import java.util.Optional;
 public abstract class ABridgeMessage<T> implements _BridgeMessage<T> {
 
     private String key;
+    private Instant time;
     private T sender;
     private Map<String, _BridgeMessageContent> parts;
 
-    public ABridgeMessage(String key, T sender, List<_BridgeMessageContent> partsList) {
+    public ABridgeMessage(String key, Instant time, T sender, List<_BridgeMessageContent> partsList) {
         this.key = key;
+        this.time = time;
         this.sender = sender;
 
         Map<String, _BridgeMessageContent> partsMap = new HashMap<>();
@@ -53,8 +56,8 @@ public abstract class ABridgeMessage<T> implements _BridgeMessage<T> {
     }
 
     @Override
-    public long getTimestamp() {
-        return 0;
+    public Instant getTime() {
+        return time;
     }
 
     @Override

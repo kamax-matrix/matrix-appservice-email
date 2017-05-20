@@ -134,7 +134,7 @@ subscription:
     email:
       # List of body parts to send. An empty list will disable e-mail sending on this event.
       onCreate:
-          subject: ""
+          subject: "%SENDER_NAME% invited you to a new Matrix conversation"
           content:
             # Mime type of text content. Typical value:
             #  - text/plain
@@ -164,7 +164,7 @@ subscription:
         content: []
 
       onDestroy:
-        subject: ""
+        subject: "Matrix conversation in room %ROOM_NAME% has been terminated"
         content:
           - type: "text/plain"
             header: "classpath:templates/email/header.txt"
@@ -177,7 +177,7 @@ subscription:
             content: "classpath:templates/email/onSubDestroy-content.html"
 
       onMessage:
-        subject: ""
+        subject: "%SENDER_NAME% sent you a message on Matrix"
         content:
           - type: "text/plain"
             header: "classpath:templates/email/header.txt"

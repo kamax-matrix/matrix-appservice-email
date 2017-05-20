@@ -20,16 +20,17 @@
 
 package io.kamax.matrix.bridge.email.model.subscription;
 
-import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeUser;
 import io.kamax.matrix.client._MatrixClient;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 public interface _SubscriptionManager {
 
-    _BridgeSubscription create(_MatrixBridgeMessage event, _MatrixBridgeUser mxUser, String roomId);
+    _BridgeSubscription create(_MatrixID initiator, Instant time, _MatrixBridgeUser mxUser, String roomId);
 
     Optional<_BridgeSubscription> find(String email, _MatrixClient mxUser, String roomId);
 

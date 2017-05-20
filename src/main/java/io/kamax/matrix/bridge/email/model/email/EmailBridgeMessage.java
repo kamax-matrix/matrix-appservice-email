@@ -23,12 +23,13 @@ package io.kamax.matrix.bridge.email.model.email;
 import io.kamax.matrix.bridge.email.model.ABridgeMessage;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 
+import java.time.Instant;
 import java.util.List;
 
 public class EmailBridgeMessage extends ABridgeMessage<String> implements _EmailBridgeMessage {
 
-    public EmailBridgeMessage(String key, String email, List<_BridgeMessageContent> parts) {
-        super(key, email, parts);
+    public EmailBridgeMessage(String key, Instant time, String email, List<_BridgeMessageContent> parts) {
+        super(key, time, email, parts);
     }
 
 }

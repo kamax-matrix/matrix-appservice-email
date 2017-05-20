@@ -24,6 +24,7 @@ import com.sun.mail.smtp.SMTPTransport;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
 import io.kamax.matrix.bridge.email.model.AEndPoint;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,11 +96,11 @@ public class EmailEndPoint extends AEndPoint<String, _MatrixBridgeMessage, _Emai
     }
 
     @Override
-    protected void sendMessageImpl(_MatrixBridgeMessage msg) {
+    protected void sendMessageImpl(_BridgeSubscription sub, _MatrixBridgeMessage msg) {
         log.info("Email bridge: sending message from {} to {} - start", msg.getSender(), getIdentity());
 
         try {
-            Optional<MimeMessage> mimeMsg = formatter.get(msg, this);
+            Optional<MimeMessage> mimeMsg = formatter.get(sub, msg);
             if (!mimeMsg.isPresent()) {
                 log.info("Email bridge: formatter did not return any content for matrix message, ignoring");
             } else {
