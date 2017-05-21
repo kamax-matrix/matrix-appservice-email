@@ -26,6 +26,7 @@ public enum EmailTemplateToken {
     MsgTimeHour("%MSG_TIME_HOUR%"),
     MsgTimeMin("%MSG_TIME_MIN%"),
     MsgTimeSec("%MSG_TIME_SEC%"),
+    Sender("%SENDER%"),
     SenderName("%SENDER_NAME%"),
     SenderAddress("%SENDER_ADDRESS%"),
     SenderAvatar("%SENDER_AVATAR%"),

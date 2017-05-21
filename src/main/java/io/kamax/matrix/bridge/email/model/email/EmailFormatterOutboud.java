@@ -24,8 +24,8 @@ import io.kamax.matrix.MatrixID;
 import io.kamax.matrix._MatrixUser;
 import io.kamax.matrix.bridge.email.config.ServerConfig;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
+import io.kamax.matrix.bridge.email.model.BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
-import io.kamax.matrix.bridge.email.model.BridgeMessageTextContent;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
 import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
@@ -136,7 +136,8 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             msg.setReplyTo(InternetAddress.parse(sendCfg.getTemplate().replace("%KEY%", data.getKey())));
         }
 
-        msg.setFrom(new InternetAddress(sendCfg.getEmail(), data.getSenderName(), StandardCharsets.UTF_8.name()));
+        String sender = data.isSelf() ? sendCfg.getName() : data.getSenderName();
+        msg.setFrom(new InternetAddress(sendCfg.getEmail(), sender, StandardCharsets.UTF_8.name()));
         msg.setSubject(processToken(data, template.getSubject()));
         msg.setContent(body);
         return msg;
@@ -160,8 +161,8 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
 
     private MimeMessage makeEmail(TokenData data, _EmailTemplate template, boolean allowReply) throws IOException, MessagingException {
         List<_BridgeMessageContent> contents = Arrays.asList(
-                new BridgeMessageTextContent(MimeTypeUtils.TEXT_PLAIN_VALUE),
-                new BridgeMessageTextContent(MimeTypeUtils.TEXT_HTML_VALUE)
+                new BridgeMessageContent(MimeTypeUtils.TEXT_PLAIN_VALUE),
+                new BridgeMessageContent(MimeTypeUtils.TEXT_HTML_VALUE)
         );
 
         return makeEmail(data, template, contents, allowReply);
@@ -212,11 +213,13 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         tokenData.setTimeMin(ldt.format(minFormatter));
         tokenData.setTimeSec(ldt.format(secFormatter));
         tokenData.setSenderAddress(userSource.getId().getId());
-        tokenData.setSenderName(userSource.getName().orElse(userSource.getId().getId()));
+        tokenData.setSenderName(userSource.getName().orElse(""));
+        tokenData.setSender(StringUtils.defaultIfBlank(tokenData.getSenderName(), tokenData.getSenderAddress()));
         tokenData.setReceiverAddress(sub.getEmailEndpoint().getIdentity());
         tokenData.setRoomAddress(sub.getMatrixEndpoint().getChannelId());
         tokenData.setRoomName(mxClient.getRoom(tokenData.getRoomAddress()).getName().orElse(""));
         tokenData.setRoom(StringUtils.defaultIfBlank(tokenData.getRoomName(), tokenData.getRoomAddress()));
+        tokenData.setSelf(sub.getMatrixEndpoint().getClient().getUserId().equals(msg.getSender()));
 
         return Optional.of(makeEmail(tokenData, template, contents, true));
     }
@@ -245,17 +248,21 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         tokenData.setTimeMin(ldt.format(minFormatter));
         tokenData.setTimeSec(ldt.format(secFormatter));
         tokenData.setSenderAddress(userSource.getId().getId());
-        tokenData.setSenderName(userSource.getName().orElse(userSource.getId().getId()));
+        tokenData.setSenderName(userSource.getName().orElse(""));
+        tokenData.setSender(StringUtils.defaultIfBlank(tokenData.getSenderName(), tokenData.getSenderAddress()));
         tokenData.setReceiverAddress(ev.getSubscription().getEmailEndpoint().getIdentity());
         tokenData.setRoomAddress(ev.getSubscription().getMatrixEndpoint().getChannelId());
         tokenData.setRoomName(mxClient.getRoom(tokenData.getRoomAddress()).getName().orElse(""));
         tokenData.setRoom(StringUtils.defaultIfBlank(tokenData.getRoomName(), tokenData.getRoomAddress()));
+        tokenData.setSelf(StringUtils.equalsIgnoreCase(ev.getInitiator(), ev.getSubscription().getMatrixEndpoint().getClient().getUserId().getId()));
 
         switch (ev.getType()) {
             case OnCreate:
                 return Optional.of(makeEmail(tokenData, template, true));
+            case OnDestroy:
+                return Optional.of(makeEmail(tokenData, template, false));
             default:
-                log.warn("Unknown subscription event type {}", ev.getType().getId());
+                log.warn("Unknown subscription event type {}, using default behaviour", ev.getType().getId());
                 return Optional.of(makeEmail(tokenData, template, false));
         }
     }
@@ -266,6 +273,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         private String timeHour;
         private String timeMin;
         private String timeSec;
+        private String sender;
         private String senderName;
         private String senderAddress;
         private String senderAvatar;
@@ -274,6 +282,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         private String roomName;
         private String roomAddress;
         private String manageUrl;
+        private boolean isSelf;
 
         TokenData(String key) {
             this.key = key;
@@ -305,6 +314,14 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
 
         void setTimeSec(String timeSec) {
             this.timeSec = timeSec;
+        }
+
+        public String getSender() {
+            return sender;
+        }
+
+        public void setSender(String sender) {
+            this.sender = sender;
         }
 
         String getSenderName() {
@@ -371,6 +388,13 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             this.manageUrl = manageUrl;
         }
 
+        public boolean isSelf() {
+            return isSelf;
+        }
+
+        public void setSelf(boolean self) {
+            isSelf = self;
+        }
     }
 
 }
