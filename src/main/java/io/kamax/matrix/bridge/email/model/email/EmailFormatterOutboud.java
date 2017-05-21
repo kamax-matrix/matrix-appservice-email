@@ -202,6 +202,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             }
         }
 
+        // TODO refactor with duplicated code within get()
         _MatrixClient mxClient = sub.getMatrixEndpoint().getClient();
         _MatrixUser userSource = msg.getSender();
         LocalDateTime ldt = LocalDateTime.ofInstant(msg.getTime(), ZoneOffset.systemDefault());
