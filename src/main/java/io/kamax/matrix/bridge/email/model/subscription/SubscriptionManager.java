@@ -141,12 +141,12 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
 
         String threadId = subId.replace("-", "");
 
-        return create(initiator, time, subId, user.getEmail(), threadId, user.getClient().getUserId().getId(), roomId);
+        return create(initiator, time, subId, user.getEmail(), threadId, user.getClient().getUser().getId(), roomId);
     }
 
     @Override
     public Optional<_BridgeSubscription> find(String email, _MatrixClient mxUser, String roomId) {
-        String mxId = mxUser.getUserId().getId();
+        String mxId = mxUser.getUser().getId();
 
         return getWithMatrixKey(mxMgr.getKey(mxId, roomId));
     }

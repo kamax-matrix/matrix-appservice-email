@@ -43,7 +43,7 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
     private MatrixNotificationConfig notifCfg;
 
     public MatrixEndPoint(String id, _MatrixClient client, String roomId, MatrixNotificationConfig notifCfg) {
-        super(id, client.getUserId(), roomId);
+        super(id, client.getUser(), roomId);
         this.client = client;
         this.notifCfg = notifCfg;
     }

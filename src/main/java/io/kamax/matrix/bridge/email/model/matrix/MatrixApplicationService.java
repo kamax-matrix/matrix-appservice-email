@@ -204,7 +204,7 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             if (!user.is(mgr.getClient())) {
                 log.info("We are a bridge user, registering subscription");
 
-                Optional<_BridgeSubscription> subOpt = subMgr.getWithMatrixKey(mgr.getKey(user.getClient().getUserId().getId(), ev.getRoomId()));
+                Optional<_BridgeSubscription> subOpt = subMgr.getWithMatrixKey(mgr.getKey(user.getClient().getUser().getId(), ev.getRoomId()));
                 if (!subOpt.isPresent()) {
                     log.info("Joined room without a subscription, leaving");
                     user.getClient().getRoom(ev.getRoomId()).leave();
@@ -221,10 +221,10 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             if (!user.is(mgr.getClient())) {
                 log.info("We are a bridge user, cleaning up endpoint and subscription");
 
-                MatrixEndPoint ep = mgr.getEndpoint(user.getClient().getUserId().getId(), ev.getRoomId());
+                MatrixEndPoint ep = mgr.getEndpoint(user.getClient().getUser().getId(), ev.getRoomId());
                 ep.close();
 
-                Optional<_BridgeSubscription> subOpt = subMgr.getWithMatrixKey(mgr.getKey(user.getClient().getUserId().getId(), ev.getRoomId()));
+                Optional<_BridgeSubscription> subOpt = subMgr.getWithMatrixKey(mgr.getKey(user.getClient().getUser().getId(), ev.getRoomId()));
                 if (subOpt.isPresent()) {
                     log.info("Subscription is still active, canceling");
                     subOpt.get().terminate();

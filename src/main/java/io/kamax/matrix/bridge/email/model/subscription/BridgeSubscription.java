@@ -108,7 +108,7 @@ public class BridgeSubscription implements _BridgeSubscription {
 
     @Override
     public void terminate() {
-        terminate(getMatrixEndpoint().getClient().getUserId().getId(), "");
+        terminate(getMatrixEndpoint().getClient().getUser().getId(), "");
     }
 
     @Override

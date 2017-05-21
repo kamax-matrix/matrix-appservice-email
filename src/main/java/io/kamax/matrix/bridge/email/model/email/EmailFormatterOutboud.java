@@ -219,7 +219,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         tokenData.setRoomAddress(sub.getMatrixEndpoint().getChannelId());
         tokenData.setRoomName(mxClient.getRoom(tokenData.getRoomAddress()).getName().orElse(""));
         tokenData.setRoom(StringUtils.defaultIfBlank(tokenData.getRoomName(), tokenData.getRoomAddress()));
-        tokenData.setSelf(sub.getMatrixEndpoint().getClient().getUserId().equals(msg.getSender()));
+        tokenData.setSelf(sub.getMatrixEndpoint().getClient().getUser().equals(msg.getSender()));
 
         return Optional.of(makeEmail(tokenData, template, contents, true));
     }
@@ -254,7 +254,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         tokenData.setRoomAddress(ev.getSubscription().getMatrixEndpoint().getChannelId());
         tokenData.setRoomName(mxClient.getRoom(tokenData.getRoomAddress()).getName().orElse(""));
         tokenData.setRoom(StringUtils.defaultIfBlank(tokenData.getRoomName(), tokenData.getRoomAddress()));
-        tokenData.setSelf(StringUtils.equalsIgnoreCase(ev.getInitiator(), ev.getSubscription().getMatrixEndpoint().getClient().getUserId().getId()));
+        tokenData.setSelf(StringUtils.equalsIgnoreCase(ev.getInitiator(), ev.getSubscription().getMatrixEndpoint().getClient().getUser().getId()));
 
         switch (ev.getType()) {
             case OnCreate:
