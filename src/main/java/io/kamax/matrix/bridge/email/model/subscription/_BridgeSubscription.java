@@ -46,7 +46,7 @@ public interface _BridgeSubscription {
 
     void terminate();
 
-    void termine(String source, String reason);
+    void terminate(String source, String reason);
 
     void addListener(_BridgeSubscriptionListener listener);
 

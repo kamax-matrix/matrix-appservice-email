@@ -62,7 +62,8 @@ public abstract class AEndPoint<K, V extends _BridgeMessage, S extends _BridgeMe
         return identity;
     }
 
-    protected boolean isClosed() {
+    @Override
+    public boolean isClosed() {
         return isClosed;
     }
 

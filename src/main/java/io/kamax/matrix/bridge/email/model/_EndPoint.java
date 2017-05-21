@@ -31,6 +31,8 @@ public interface _EndPoint<K, V extends _BridgeMessage, S extends _BridgeMessage
 
     K getIdentity();
 
+    boolean isClosed();
+
     void close();
 
     void sendEvent(_SubscriptionEvent ev);

@@ -108,11 +108,11 @@ public class BridgeSubscription implements _BridgeSubscription {
 
     @Override
     public void terminate() {
-
+        terminate(getMatrixEndpoint().getClient().getUserId().getId(), "");
     }
 
     @Override
-    public void termine(String byUserId, String reason) {
+    public void terminate(String byUserId, String reason) {
         synchronized (this) {
             if (isClosed) {
                 return;
@@ -130,9 +130,11 @@ public class BridgeSubscription implements _BridgeSubscription {
 
         SubscriptionEvent ev = new SubscriptionEvent(SubscriptionEvents.OnDestroy, this, Instant.now(), byUserId);
 
-        log.info("Closing Matrix endpoint");
-        mxEp.sendEvent(ev);
-        mxEp.close();
+        if (!mxEp.isClosed()) {
+            log.info("Closing Matrix endpoint");
+            mxEp.sendEvent(ev);
+            mxEp.close();
+        }
 
         log.info("Closing Email endpoint");
         emEp.sendEvent(ev);

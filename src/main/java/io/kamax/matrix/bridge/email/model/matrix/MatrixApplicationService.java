@@ -219,7 +219,10 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             log.info("Left room {} on {} as {}", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
 
             if (!user.is(mgr.getClient())) {
-                log.info("We are a bridge user, removing subscription");
+                log.info("We are a bridge user, cleaning up endpoint and subscription");
+
+                MatrixEndPoint ep = mgr.getEndpoint(user.getClient().getUserId().getId(), ev.getRoomId());
+                ep.close();
 
                 Optional<_BridgeSubscription> subOpt = subMgr.getWithMatrixKey(mgr.getKey(user.getClient().getUserId().getId(), ev.getRoomId()));
                 if (subOpt.isPresent()) {
