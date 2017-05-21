@@ -101,6 +101,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         template = StringUtils.replace(template, EmailTemplateToken.ReceiverAddress.getToken(), data.getReceiverAddress());
         template = StringUtils.replace(template, EmailTemplateToken.SenderAddress.getToken(), data.getSenderAddress());
         template = StringUtils.replace(template, EmailTemplateToken.SenderName.getToken(), data.getSenderName());
+        template = StringUtils.replace(template, EmailTemplateToken.Sender.getToken(), data.getSender());
         template = StringUtils.replace(template, EmailTemplateToken.SenderAvatar.getToken(), data.getSenderAvatar());
         template = StringUtils.replace(template, EmailTemplateToken.RoomAddress.getToken(), data.getRoomAddress());
         template = StringUtils.replace(template, EmailTemplateToken.RoomName.getToken(), data.getRoomName());
