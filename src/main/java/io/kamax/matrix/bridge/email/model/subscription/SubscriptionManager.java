@@ -81,6 +81,7 @@ public class SubscriptionManager implements InitializingBean, _SubscriptionManag
         BridgeSubscriptionDao dao = new BridgeSubscriptionDao();
 
         dao.setSubId(sub.getId());
+        dao.setSourceMxId(sub.getInitiator());
         dao.setEmail(sub.getEmailEndpoint().getIdentity());
         dao.setThreadId(sub.getEmailEndpoint().getChannelId());
         dao.setMxId(sub.getMatrixEndpoint().getIdentity().getId());
