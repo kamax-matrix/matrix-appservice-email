@@ -1,7 +1,10 @@
-<p>You have a new message:
-    <bn/>
-<blockquote>%BODY%</blockquote>
-</p>
-<p>
-    <a href="%MANAGE_URL%">Manage your subscriptions</a>
+<p>You received a new message from %SENDER% in the conversation "%ROOM%":<br/>
+<table>
+    <tr>
+        <td><span><img height="32" width="32" src="cid:%SENDER_AVATAR%" id="%SENDER_AVATAR%" alt="sender avatar"></span>
+        </td>
+        <td>%MSG_TIME_HOUR%:%MSG_TIME_MIN%</td>
+        <td>%MSG_CONTENT%</td>
+    </tr>
+</table>
 </p>

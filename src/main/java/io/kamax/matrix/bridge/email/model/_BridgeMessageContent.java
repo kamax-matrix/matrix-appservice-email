@@ -24,6 +24,8 @@ public interface _BridgeMessageContent {
 
     String getMime();
 
-    String getContent();
+    byte[] getContent();
+
+    String getContentAsString();
 
 }

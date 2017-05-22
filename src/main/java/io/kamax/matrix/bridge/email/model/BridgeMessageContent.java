@@ -18,18 +18,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.model.email;
+package io.kamax.matrix.bridge.email.model;
 
-import io.kamax.matrix.bridge.email.model.ABridgeMessage;
-import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
+import java.nio.charset.StandardCharsets;
 
-import java.time.Instant;
-import java.util.List;
+public class BridgeMessageContent implements _BridgeMessageContent {
 
-public class EmailBridgeMessage extends ABridgeMessage<String> implements _EmailBridgeMessage {
+    private String mime;
+    private byte[] content;
 
-    public EmailBridgeMessage(String key, Instant time, String email, List<_BridgeMessageContent> parts) {
-        super(key, time, email, parts);
+    public BridgeMessageContent(String mime) {
+        this(mime, new byte[0]);
     }
 
+    public BridgeMessageContent(String mime, byte[] content) {
+        this.mime = mime;
+        this.content = content;
+    }
+
+    @Override
+    public String getMime() {
+        return mime;
+    }
+
+    @Override
+    public byte[] getContent() {
+        return content;
+    }
+
+    @Override
+    public String getContentAsString() {
+        return new String(getContent(), StandardCharsets.UTF_8);
+    }
 }

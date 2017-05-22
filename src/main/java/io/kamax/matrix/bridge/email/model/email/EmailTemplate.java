@@ -1,84 +1,40 @@
-/*
- * matrix-appservice-email - Matrix Bridge to E-mail
- * Copyright (C) 2017 Maxime Dor
- *
- * https://max.kamax.io/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as
- * published by the Free Software Foundation, either version 3 of the
- * License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
 package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix.bridge.email.config.subscription.EmailTemplateConfig;
-import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Scope;
-import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 @Component
 @Scope("prototype")
 @Lazy
-public class EmailTemplate implements InitializingBean, _EmailTemplate {
+public class EmailTemplate implements _EmailTemplate {
 
-    @Autowired
-    private ApplicationContext app;
+    private String subject;
+    private Map<String, _EmailTemplateContent> contentTemplates;
 
-    private EmailTemplateConfig cfg;
-    private Resource header;
-    private Resource footer;
-    private Resource content;
-
-    public EmailTemplate(EmailTemplateConfig cfg) {
-        this.cfg = cfg;
-    }
-
-    private Resource get(String path) {
-        return app.getResource(path);
+    public EmailTemplate(String subject, List<_EmailTemplateContent> contentTemplates) {
+        this.subject = subject;
+        this.contentTemplates = new HashMap<>();
+        for (_EmailTemplateContent content : contentTemplates) {
+            this.contentTemplates.put(content.getType(), content);
+        }
     }
 
     @Override
-    public void afterPropertiesSet() throws Exception {
-        header = get(cfg.getHeader());
-        footer = get(cfg.getFooter());
-        content = get(cfg.getContent());
+    public String getSubject() {
+        return subject;
     }
 
     @Override
-    public String getType() {
-        return cfg.getType();
+    public List<_EmailTemplateContent> listContents() {
+        return new ArrayList<>(contentTemplates.values());
     }
 
     @Override
-    public String getHeader() throws IOException {
-        return IOUtils.toString(header.getInputStream(), StandardCharsets.UTF_8);
-    }
-
-    @Override
-    public String getFooter() throws IOException {
-        return IOUtils.toString(footer.getInputStream(), StandardCharsets.UTF_8);
-    }
-
-    @Override
-    public String getContent() throws IOException {
-        return IOUtils.toString(content.getInputStream(), StandardCharsets.UTF_8);
+    public Optional<_EmailTemplateContent> getContent(String mime) {
+        return Optional.ofNullable(contentTemplates.get(mime));
     }
 
 }

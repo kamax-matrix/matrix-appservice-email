@@ -58,7 +58,7 @@ public class SubscriptionSqlite implements InitializingBean, _SubscriptionDao {
 
         conn = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getPath());
         try (Statement stmt = conn.createStatement()) {
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS subscription (id string PRIMARY KEY, email string, threadId string, mxId string, roomId string)");
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS subscription (id string PRIMARY KEY, sourceMxId string, timestamp long, email string, threadId string, mxId string, roomId string)");
         }
     }
 
@@ -66,12 +66,14 @@ public class SubscriptionSqlite implements InitializingBean, _SubscriptionDao {
     public void store(BridgeSubscriptionDao dao) {
         log.info("Storing subscription {} in DB", dao.getSubId());
 
-        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO subscription VALUES(?,?,?,?,?)")) {
+        try (PreparedStatement stmt = conn.prepareStatement("REPLACE INTO subscription VALUES(?,?,?,?,?,?,?)")) {
             stmt.setString(1, dao.getSubId());
-            stmt.setString(2, dao.getEmail());
-            stmt.setString(3, dao.getThreadId());
-            stmt.setString(4, dao.getMxId());
-            stmt.setString(5, dao.getRoomId());
+            stmt.setString(2, dao.getSourceMxId());
+            stmt.setLong(3, dao.getTimestamp());
+            stmt.setString(4, dao.getEmail());
+            stmt.setString(5, dao.getThreadId());
+            stmt.setString(6, dao.getMxId());
+            stmt.setString(7, dao.getRoomId());
 
             int rowCount = stmt.executeUpdate();
             log.info("Updated rows: {}", rowCount);
@@ -102,6 +104,8 @@ public class SubscriptionSqlite implements InitializingBean, _SubscriptionDao {
                 while (rSet.next()) {
                     BridgeSubscriptionDao dao = new BridgeSubscriptionDao();
                     dao.setSubId(rSet.getString("id"));
+                    dao.setSourceMxId(rSet.getString("sourceMxId"));
+                    dao.setTimestamp(rSet.getLong("timestamp"));
                     dao.setEmail(rSet.getString("email"));
                     dao.setThreadId(rSet.getString("threadId"));
                     dao.setMxId(rSet.getString("mxId"));

@@ -134,50 +134,60 @@ subscription:
     email:
       # List of body parts to send. An empty list will disable e-mail sending on this event.
       onCreate:
-          # Type of text content. Supported values:
-          #  - plain
-          #  - html
-        - type: "plain"
+          subject: "%SENDER% invited you to a new Matrix conversation"
+          content:
+            # Mime type of text content. Typical value:
+            #  - text/plain
+            #  - text/html
+          - type: "text/plain"
 
-          # Location of the header template to use
-          header: "classpath:templates/email/header.txt"
+            # Location of the header template to use
+            header: "classpath:templates/email/header.txt"
 
-          # Location of the footer template to use
-          footer: "classpath:templates/email/footer.txt"
+            # Location of the footer template to use
+            footer: "classpath:templates/email/footer.txt"
 
-          # Location of the content template to use
-          content: "classpath:templates/email/onSubCreate-content.txt"
+            # Location of the content template to use
+            content: "classpath:templates/email/onSubCreate-content.txt"
 
-        - type: "html"
-          header: "classpath:templates/email/header.html"
-          footer: "classpath:templates/email/footer.html"
-          content: "classpath:templates/email/onSubCreate-content.html"
+          - type: "text/html"
+            header: "classpath:templates/email/header.html"
+            footer: "classpath:templates/email/footer.html"
+            content: "classpath:templates/email/onSubCreate-content.html"
 
-      onMute: []
+      onMute:
+        # Empty content will disable this event
+        content: []
 
-      onUnmute: []
+      onUnmute:
+        # Empty content will disable this event
+        content: []
 
       onDestroy:
-        - type: "plain"
-          header: "classpath:templates/email/header.txt"
-          footer: "classpath:templates/email/footer.txt"
-          content: "classpath:templates/email/onSubDestroy-content.txt"
+        subject: "Matrix conversation in room %ROOM% has been terminated"
+        content:
+          - type: "text/plain"
+            header: "classpath:templates/email/header.txt"
+            footer: "classpath:templates/email/footer.txt"
+            content: "classpath:templates/email/onSubDestroy-content.txt"
 
-        - type: "html"
-          header: "classpath:templates/email/header.html"
-          footer: "classpath:templates/email/footer.html"
-          content: "classpath:templates/email/onSubDestroy-content.html"
+          - type: "text/html"
+            header: "classpath:templates/email/header.html"
+            footer: "classpath:templates/email/footer.html"
+            content: "classpath:templates/email/onSubDestroy-content.html"
 
       onMessage:
-        - type: "plain"
-          header: "classpath:templates/email/header.txt"
-          footer: "classpath:templates/email/footer.txt"
-          content: "classpath:templates/email/onSubMessage-content.txt"
+        subject: "%SENDER% sent you a message on Matrix"
+        content:
+          - type: "text/plain"
+            header: "classpath:templates/email/header.txt"
+            footer: "classpath:templates/email/footer.txt"
+            content: "classpath:templates/email/onSubMessage-content.txt"
 
-        - type: "html"
-          header: "classpath:templates/email/header.html"
-          footer: "classpath:templates/email/footer.html"
-          content: "classpath:templates/email/onSubMessage-content.html"
+          - type: "text/html"
+            header: "classpath:templates/email/header.html"
+            footer: "classpath:templates/email/footer.html"
+            content: "classpath:templates/email/onSubMessage-content.html"
 
     # Only boolean values
     matrix:

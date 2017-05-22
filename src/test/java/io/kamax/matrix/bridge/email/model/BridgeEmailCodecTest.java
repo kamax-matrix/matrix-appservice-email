@@ -1,4 +1,4 @@
-/*
+package io.kamax.matrix.bridge.email.model;/*
  * matrix-appservice-email - Matrix Bridge to E-mail
  * Copyright (C) 2017 Maxime Dor
  *
@@ -18,7 +18,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import io.kamax.matrix.bridge.email.model.BridgeEmailCodec;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -33,10 +32,11 @@ public class BridgeEmailCodecTest {
             new String[]{"á", "=c3=a1"},
             new String[]{".abá12_", ".ab=c3=a112_"},
             new String[]{"john.doe@example.org", "john.doe=40example.org"},
+            new String[]{"john.doe@sub.example.org", "john.doe=40sub.example.org"},
             new String[]{"わたし@example.org", "=e3=82=8f=e3=81=9f=e3=81=97=40example.org"}
     );
 
-    static BridgeEmailCodec codec;
+    private static BridgeEmailCodec codec;
 
     @BeforeClass
     public static void beforeClass() {

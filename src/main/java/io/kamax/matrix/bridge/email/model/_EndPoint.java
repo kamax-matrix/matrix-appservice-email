@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 
 public interface _EndPoint<K, V extends _BridgeMessage, S extends _BridgeMessage> {
@@ -30,11 +31,13 @@ public interface _EndPoint<K, V extends _BridgeMessage, S extends _BridgeMessage
 
     K getIdentity();
 
+    boolean isClosed();
+
     void close();
 
-    void sendMessage(V msg);
+    void sendEvent(_SubscriptionEvent ev);
 
-    void sendNotification(_SubscriptionEvent ev);
+    void sendMessage(_BridgeSubscription sub, V msg);
 
     void addMessageListener(_EndPointMessageListener<S> listener);
 

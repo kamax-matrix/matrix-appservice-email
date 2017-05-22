@@ -20,16 +20,35 @@
 
 package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix.bridge.email.model.ABridgeMessage;
-import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
+public enum EmailTemplateToken {
 
-import java.time.Instant;
-import java.util.List;
+    MsgContent("%MSG_CONTENT%"),
+    MsgTimeHour("%MSG_TIME_HOUR%"),
+    MsgTimeMin("%MSG_TIME_MIN%"),
+    MsgTimeSec("%MSG_TIME_SEC%"),
+    Sender("%SENDER%"),
+    SenderName("%SENDER_NAME%"),
+    SenderAddress("%SENDER_ADDRESS%"),
 
-public class EmailBridgeMessage extends ABridgeMessage<String> implements _EmailBridgeMessage {
+    /**
+     * The ID of the attachment that will contain the sender avatar picture
+     */
+    SenderAvatar("%SENDER_AVATAR%"),
+    ReceiverAddress("%RECEIVER_ADDRESS%"),
+    Room("%ROOM%"),
+    RoomName("%ROOM_NAME%"),
+    RoomAddress("%ROOM_ADDRESS%"),
 
-    public EmailBridgeMessage(String key, Instant time, String email, List<_BridgeMessageContent> parts) {
-        super(key, time, email, parts);
+    ManageUrl("%MANAGE_URL%");
+
+    private String token;
+
+    EmailTemplateToken(String token) {
+        this.token = token;
+    }
+
+    public String getToken() {
+        return token;
     }
 
 }

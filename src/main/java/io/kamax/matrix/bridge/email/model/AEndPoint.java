@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,32 +62,33 @@ public abstract class AEndPoint<K, V extends _BridgeMessage, S extends _BridgeMe
         return identity;
     }
 
-    protected boolean isClosed() {
+    @Override
+    public boolean isClosed() {
         return isClosed;
     }
 
-    protected abstract void sendMessageImpl(V msg);
+    protected abstract void sendEventImpl(_SubscriptionEvent ev);
 
     @Override
-    public void sendMessage(V msg) {
-        if (isClosed()) {
-            log.info("Ignoring message {}, endpoint {} is closed", msg.getKey(), getId());
-            return;
-        }
-
-        sendMessageImpl(msg);
-    }
-
-    protected abstract void sendNotificationImpl(_SubscriptionEvent ev);
-
-    @Override
-    public void sendNotification(_SubscriptionEvent ev) {
+    public void sendEvent(_SubscriptionEvent ev) {
         if (isClosed()) {
             log.info("Ignoring subscription event {} notification, endpoint {} is closed", ev.getType(), getId());
             return;
         }
 
-        sendNotificationImpl(ev);
+        sendEventImpl(ev);
+    }
+
+    protected abstract void sendMessageImpl(_BridgeSubscription sub, V msg);
+
+    @Override
+    public void sendMessage(_BridgeSubscription sub, V msg) {
+        if (isClosed()) {
+            log.info("Ignoring message {}, endpoint {} is closed", msg.getKey(), getId());
+            return;
+        }
+
+        sendMessageImpl(sub, msg);
     }
 
     protected abstract void closeImpl();

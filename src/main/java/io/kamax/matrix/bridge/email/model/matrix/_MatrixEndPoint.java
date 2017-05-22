@@ -23,7 +23,10 @@ package io.kamax.matrix.bridge.email.model.matrix;
 import io.kamax.matrix._MatrixID;
 import io.kamax.matrix.bridge.email.model._EndPoint;
 import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
+import io.kamax.matrix.client._MatrixClient;
 
 public interface _MatrixEndPoint extends _EndPoint<_MatrixID, _EmailBridgeMessage, _MatrixBridgeMessage> {
+
+    _MatrixClient getClient();
 
 }

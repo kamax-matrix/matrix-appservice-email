@@ -24,6 +24,7 @@ import com.sun.mail.smtp.SMTPTransport;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
 import io.kamax.matrix.bridge.email.model.AEndPoint;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,6 @@ public class EmailEndPoint extends AEndPoint<String, _MatrixBridgeMessage, _Emai
     }
 
     private void send(MimeMessage msg) throws MessagingException {
-        msg.setFrom(cfg.getName() + "<" + cfg.getEmail() + ">");
         msg.setHeader("X-Mailer", "matrix-appservice-email");
         msg.setSentDate(new Date());
 
@@ -68,42 +68,51 @@ public class EmailEndPoint extends AEndPoint<String, _MatrixBridgeMessage, _Emai
         transport.setStartTLS(cfg.getTls() > 0);
         transport.setRequireStartTLS(cfg.getTls() > 1);
         transport.connect(cfg.getHost(), cfg.getPort(), cfg.getLogin(), cfg.getPassword());
+        log.info("Sending email via SMTP using {}:{}", cfg.getHost(), cfg.getPort());
 
         try {
             transport.sendMessage(msg, InternetAddress.parse(getIdentity()));
+        } catch (MessagingException e) {
+            log.error("mmm", e);
         } finally {
             transport.close();
         }
     }
 
     @Override
-    protected void sendMessageImpl(_MatrixBridgeMessage mxMsg) {
-        log.info("Email bridge: sending message from {} to {} - start", mxMsg.getSender(), getIdentity());
-
+    protected void sendEventImpl(_SubscriptionEvent ev) {
         try {
-            send(formatter.get(mxMsg, this));
-            log.info("Email bridge: sending message from {} to {} - success", mxMsg.getSender(), getIdentity());
-        } catch (Exception e) {
-            log.error("Email bridge: sending message from {} to {} - failure", mxMsg.getSender(), getIdentity());
-            throw new RuntimeException(e);
-        }
-
-        log.info("Email bridge: sending message from {} to {} - end", mxMsg.getSender(), getIdentity());
-    }
-
-    @Override
-    protected void sendNotificationImpl(_SubscriptionEvent ev) {
-        try {
-            Optional<MimeMessage> msg = formatter.get(ev, this);
+            Optional<MimeMessage> msg = formatter.get(ev);
             if (!msg.isPresent()) {
                 log.info("Formatter did not return message, ignoring notification");
                 return;
             }
 
             send(msg.get());
+            log.info("Email bridge: sending event {} to {} - success", ev.getType(), getIdentity());
         } catch (IOException | MessagingException e) {
             log.error("Could not send notification to {} about event {}", getIdentity(), ev.getType(), e);
         }
+    }
+
+    @Override
+    protected void sendMessageImpl(_BridgeSubscription sub, _MatrixBridgeMessage msg) {
+        log.info("Email bridge: sending message from {} to {} - start", msg.getSender(), getIdentity());
+
+        try {
+            Optional<MimeMessage> mimeMsg = formatter.get(sub, msg);
+            if (!mimeMsg.isPresent()) {
+                log.info("Email bridge: formatter did not return any content for matrix message, ignoring");
+            } else {
+                send(mimeMsg.get());
+                log.info("Email bridge: sending message from {} to {} - success", msg.getSender(), getIdentity());
+            }
+        } catch (Exception e) {
+            log.error("Email bridge: sending message from {} to {} - failure", msg.getSender(), getIdentity());
+            throw new RuntimeException(e);
+        }
+
+        log.info("Email bridge: sending message from {} to {} - end", msg.getSender(), getIdentity());
     }
 
     void inject(_EmailBridgeMessage msg) {

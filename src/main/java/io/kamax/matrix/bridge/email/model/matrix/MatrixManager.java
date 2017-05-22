@@ -30,7 +30,6 @@ import io.kamax.matrix.bridge.email.model._EndPoint;
 import io.kamax.matrix.client._MatrixClient;
 import io.kamax.matrix.client.as.MatrixApplicationServiceClient;
 import io.kamax.matrix.client.as._MatrixApplicationServiceClient;
-import io.kamax.matrix.client.regular.MatrixClient;
 import io.kamax.matrix.hs.MatrixHomeserver;
 import io.kamax.matrix.hs._MatrixHomeserver;
 import org.slf4j.Logger;
@@ -99,8 +98,7 @@ public class MatrixManager implements _MatrixManager, InitializingBean {
             String email = emailCodec.decode(mOpt.get().group("email"));
 
             log.info("Creating new Matrix client for {} as {}", email, mxId);
-            _MatrixClient client = new MatrixClient(mgr.getHomeserver(), mgr.getAccessToken(), mxId);
-            return new MatrixBridgeUser(client, email);
+            return new MatrixBridgeUser(mgr.getUser(mxId.getLocalPart()), email);
         }));
     }
 
@@ -114,7 +112,7 @@ public class MatrixManager implements _MatrixManager, InitializingBean {
     }
 
     private MatrixEndPoint createEndpoint(_MatrixClient client, String roomId) {
-        String id = getKey(client.getUserId().getId(), roomId);
+        String id = getKey(client.getUser().getId(), roomId);
         MatrixEndPoint ep = new MatrixEndPoint(id, client, roomId, notifCfg);
         ep.addStateListener(this::destroyEndpoint);
         endpoints.put(id, ep);

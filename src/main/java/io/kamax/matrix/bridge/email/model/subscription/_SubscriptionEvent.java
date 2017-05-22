@@ -20,8 +20,21 @@
 
 package io.kamax.matrix.bridge.email.model.subscription;
 
+import java.time.Instant;
+
 public interface _SubscriptionEvent {
 
     SubscriptionEvents getType();
+
+    Instant getTime();
+
+    /**
+     * User who triggered the event
+     *
+     * @return Matrix ID of the user
+     */
+    String getInitiator();
+
+    _BridgeSubscription getSubscription();
 
 }

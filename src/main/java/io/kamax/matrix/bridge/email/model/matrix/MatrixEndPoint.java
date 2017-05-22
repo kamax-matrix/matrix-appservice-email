@@ -25,6 +25,7 @@ import io.kamax.matrix.bridge.email.config.subscription.MatrixNotificationConfig
 import io.kamax.matrix.bridge.email.model.AEndPoint;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import io.kamax.matrix.client._MatrixClient;
 import io.kamax.matrix.hs._MatrixRoom;
@@ -42,34 +43,13 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
     private MatrixNotificationConfig notifCfg;
 
     public MatrixEndPoint(String id, _MatrixClient client, String roomId, MatrixNotificationConfig notifCfg) {
-        super(id, client.getUserId(), roomId);
+        super(id, client.getUser(), roomId);
         this.client = client;
         this.notifCfg = notifCfg;
     }
 
     @Override
-    protected void closeImpl() {
-        client.getRoom(getChannelId()).leave();
-    }
-
-    protected void sendMessageImpl(_EmailBridgeMessage msg) {
-        Optional<_BridgeMessageContent> html = msg.getContent(MimeTypeUtils.TEXT_HTML_VALUE);
-        Optional<_BridgeMessageContent> txt = msg.getContent(MimeTypeUtils.TEXT_PLAIN_VALUE);
-        if (!html.isPresent() && !txt.isPresent()) {
-            log.warn("Ignoring E-mail message {} to {}, no valid content", msg.getKey(), msg.getSender());
-        }
-
-        if (html.isPresent() && txt.isPresent()) {
-            log.info("Forwarding e-mail {} to Matrix from {} with formatted content", msg.getKey(), msg.getSender());
-            client.getRoom(getChannelId()).sendFormattedText(html.get().getContent(), txt.get().getContent());
-        } else {
-            log.info("Forwarding e-mail {} to Matrix from {} with plain content", msg.getKey(), msg.getSender());
-            client.getRoom(getChannelId()).sendText(txt.get().getContent());
-        }
-    }
-
-    @Override
-    protected void sendNotificationImpl(_SubscriptionEvent ev) {
+    protected void sendEventImpl(_SubscriptionEvent ev) {
         if (!notifCfg.get(ev.getType())) {
             log.info("Subscription event {} has Matrix notification disabled, ignoring", ev.getType());
             return;
@@ -86,10 +66,36 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
         }
     }
 
+    @Override
+    protected void closeImpl() {
+        client.getRoom(getChannelId()).leave();
+    }
+
+    protected void sendMessageImpl(_BridgeSubscription sub, _EmailBridgeMessage msg) {
+        Optional<_BridgeMessageContent> html = msg.getContent(MimeTypeUtils.TEXT_HTML_VALUE);
+        Optional<_BridgeMessageContent> txt = msg.getContent(MimeTypeUtils.TEXT_PLAIN_VALUE);
+        if (!html.isPresent() && !txt.isPresent()) {
+            log.warn("Ignoring E-mail message {} to {}, no valid content", msg.getKey(), msg.getSender());
+        }
+
+        if (html.isPresent() && txt.isPresent()) {
+            log.info("Forwarding e-mail {} to Matrix from {} with formatted content", msg.getKey(), msg.getSender());
+            client.getRoom(getChannelId()).sendFormattedText(html.get().getContentAsString(), txt.get().getContentAsString());
+        } else {
+            log.info("Forwarding e-mail {} to Matrix from {} with plain content", msg.getKey(), msg.getSender());
+            client.getRoom(getChannelId()).sendText(txt.get().getContentAsString());
+        }
+    }
+
     void inject(_MatrixBridgeMessage msg) {
         log.info("Matrix message was injected into end point {} - {} - {}", getId(), getIdentity(), getChannelId());
 
         fireMessageEvent(msg);
+    }
+
+    @Override
+    public _MatrixClient getClient() {
+        return client;
     }
 
 }

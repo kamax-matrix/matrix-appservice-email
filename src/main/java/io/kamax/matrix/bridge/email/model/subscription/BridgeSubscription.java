@@ -26,6 +26,7 @@ import io.kamax.matrix.bridge.email.model.matrix._MatrixEndPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +34,8 @@ public class BridgeSubscription implements _BridgeSubscription {
 
     private Logger log = LoggerFactory.getLogger(BridgeSubscription.class);
 
+    private String sourceMxId;
+    private Instant timestamp;
     private String id;
     private String emKey;
     private String mxKey;
@@ -42,20 +45,27 @@ public class BridgeSubscription implements _BridgeSubscription {
     private boolean isClosed;
     private List<_BridgeSubscriptionListener> listeners = new ArrayList<>();
 
-    public BridgeSubscription(String id, _MessageFormatter formatter, String emKey, _EmailEndPoint emEp, String mxKey, _MatrixEndPoint mxEp) {
+    public BridgeSubscription(String id, String sourceMxId, Instant timestamp, _MessageFormatter formatter, String emKey, _EmailEndPoint emEp, String mxKey, _MatrixEndPoint mxEp) {
         this.id = id;
+        this.sourceMxId = sourceMxId;
+        this.timestamp = timestamp;
         this.emKey = emKey;
         this.mxKey = mxKey;
         this.mxEp = mxEp;
         this.emEp = emEp;
 
-        mxEp.addMessageListener(msg -> emEp.sendMessage(formatter.format(msg)));
-        emEp.addMessageListener(msg -> mxEp.sendMessage(formatter.format(msg)));
+        mxEp.addMessageListener(msg -> emEp.sendMessage(this, formatter.format(msg)));
+        emEp.addMessageListener(msg -> mxEp.sendMessage(this, formatter.format(msg)));
     }
 
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public String getInitiator() {
+        return sourceMxId;
     }
 
     @Override
@@ -91,13 +101,18 @@ public class BridgeSubscription implements _BridgeSubscription {
                 emKey,
                 emEp.getIdentity());
 
-        SubscriptionEvent ev = new SubscriptionEvent(SubscriptionEvents.OnCreate);
-        emEp.sendNotification(ev);
-        mxEp.sendNotification(ev);
+        SubscriptionEvent ev = new SubscriptionEvent(SubscriptionEvents.OnCreate, this, timestamp, sourceMxId);
+        emEp.sendEvent(ev);
+        mxEp.sendEvent(ev);
     }
 
     @Override
     public void terminate() {
+        terminate(getMatrixEndpoint().getClient().getUser().getId(), "");
+    }
+
+    @Override
+    public void terminate(String byUserId, String reason) {
         synchronized (this) {
             if (isClosed) {
                 return;
@@ -113,14 +128,16 @@ public class BridgeSubscription implements _BridgeSubscription {
                 emKey,
                 emEp.getIdentity());
 
-        SubscriptionEvent ev = new SubscriptionEvent(SubscriptionEvents.OnDestroy);
+        SubscriptionEvent ev = new SubscriptionEvent(SubscriptionEvents.OnDestroy, this, Instant.now(), byUserId);
 
-        log.info("Closing Matrix endpoint");
-        mxEp.sendNotification(ev);
-        mxEp.close();
+        if (!mxEp.isClosed()) {
+            log.info("Closing Matrix endpoint");
+            mxEp.sendEvent(ev);
+            mxEp.close();
+        }
 
         log.info("Closing Email endpoint");
-        emEp.sendNotification(ev);
+        emEp.sendEvent(ev);
         emEp.close();
 
         for (_BridgeSubscriptionListener listener : listeners) {

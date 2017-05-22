@@ -20,16 +20,16 @@
 
 package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix.bridge.email.model.ABridgeMessage;
-import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
+import java.io.IOException;
 
-import java.time.Instant;
-import java.util.List;
+public interface _EmailTemplateContent {
 
-public class EmailBridgeMessage extends ABridgeMessage<String> implements _EmailBridgeMessage {
+    String getType();
 
-    public EmailBridgeMessage(String key, Instant time, String email, List<_BridgeMessageContent> parts) {
-        super(key, time, email, parts);
-    }
+    String getHeader() throws IOException;
+
+    String getFooter() throws IOException;
+
+    String getContent() throws IOException;
 
 }

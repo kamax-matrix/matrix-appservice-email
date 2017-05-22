@@ -122,9 +122,9 @@ public class ThunderbirdClientFormatter implements _EmailClientFormatter {
     @Override
     public _BridgeMessageContent format(_BridgeMessageContent content) {
         if ("text/plain".contentEquals(content.getMime())) {
-            return new BridgeMessageTextContent(formatPlain(content.getContent()));
+            return new BridgeMessageTextContent(formatPlain(content.getContentAsString()));
         } else if ("text/html".contentEquals(content.getMime())) {
-            return new BridgeMessageHtmlContent(formatHtml(content.getContent()));
+            return new BridgeMessageHtmlContent(formatHtml(content.getContentAsString()));
         } else {
             throw new IllegalArgumentException(content.getMime() + " is not supported");
         }

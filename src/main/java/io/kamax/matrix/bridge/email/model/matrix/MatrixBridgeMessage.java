@@ -24,12 +24,17 @@ import io.kamax.matrix._MatrixUser;
 import io.kamax.matrix.bridge.email.model.ABridgeMessage;
 import io.kamax.matrix.bridge.email.model.BridgeMessageTextContent;
 
+import java.time.Instant;
 import java.util.Collections;
 
 public class MatrixBridgeMessage extends ABridgeMessage<_MatrixUser> implements _MatrixBridgeMessage {
 
-    public MatrixBridgeMessage(String key, _MatrixUser sender, String txtContent) {
-        super(key, sender, Collections.singletonList(new BridgeMessageTextContent(txtContent)));
+    public MatrixBridgeMessage(String key, Instant time, _MatrixUser sender, String txtContent) {
+        super(key, time, sender, Collections.singletonList(new BridgeMessageTextContent(txtContent)));
+    }
+
+    public MatrixBridgeMessage(String key, Instant time, _MatrixUser sender) {
+        super(key, time, sender, Collections.emptyList());
     }
 
 }

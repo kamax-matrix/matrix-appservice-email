@@ -1,1 +1,2 @@
-%BODY%
+Your subscription to the Matrix room "%ROOM%" has been terminated.
+You will no longer receive message from us concerning this conversation. You may still receive notifications for other room subscriptions.

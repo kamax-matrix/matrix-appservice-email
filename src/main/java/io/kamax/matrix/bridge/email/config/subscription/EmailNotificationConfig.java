@@ -27,63 +27,59 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 @Configuration
 @ConfigurationProperties("subscription.notification.email")
 public class EmailNotificationConfig implements InitializingBean {
 
     private Logger log = LoggerFactory.getLogger(EmailNotificationConfig.class);
 
-    private List<EmailTemplateConfig> onCreate = new ArrayList<>();
-    private List<EmailTemplateConfig> onDestroy = new ArrayList<>();
-    private List<EmailTemplateConfig> onMessage = new ArrayList<>();
-    private List<EmailTemplateConfig> onMute = new ArrayList<>();
-    private List<EmailTemplateConfig> onUnmute = new ArrayList<>();
+    private EmailTemplateConfig onCreate;
+    private EmailTemplateConfig onDestroy;
+    private EmailTemplateConfig onMessage;
+    private EmailTemplateConfig onMute;
+    private EmailTemplateConfig onUnmute;
 
-    public List<EmailTemplateConfig> getOnCreate() {
+    public EmailTemplateConfig getOnCreate() {
         return onCreate;
     }
 
-    public void setOnCreate(List<EmailTemplateConfig> onCreate) {
+    public void setOnCreate(EmailTemplateConfig onCreate) {
         this.onCreate = onCreate;
     }
 
-    public List<EmailTemplateConfig> getOnDestroy() {
+    public EmailTemplateConfig getOnDestroy() {
         return onDestroy;
     }
 
-    public void setOnDestroy(List<EmailTemplateConfig> onDestroy) {
+    public void setOnDestroy(EmailTemplateConfig onDestroy) {
         this.onDestroy = onDestroy;
     }
 
-    public List<EmailTemplateConfig> getOnMessage() {
+    public EmailTemplateConfig getOnMessage() {
         return onMessage;
     }
 
-    public void setOnMessage(List<EmailTemplateConfig> onMessage) {
+    public void setOnMessage(EmailTemplateConfig onMessage) {
         this.onMessage = onMessage;
     }
 
-    public List<EmailTemplateConfig> getOnMute() {
+    public EmailTemplateConfig getOnMute() {
         return onMute;
     }
 
-    public void setOnMute(List<EmailTemplateConfig> onMute) {
+    public void setOnMute(EmailTemplateConfig onMute) {
         this.onMute = onMute;
     }
 
-    public List<EmailTemplateConfig> getOnUnmute() {
+    public EmailTemplateConfig getOnUnmute() {
         return onUnmute;
     }
 
-    public void setOnUnmute(List<EmailTemplateConfig> onUnmute) {
+    public void setOnUnmute(EmailTemplateConfig onUnmute) {
         this.onUnmute = onUnmute;
     }
 
-    public List<EmailTemplateConfig> get(SubscriptionEvents event) {
+    public EmailTemplateConfig get(SubscriptionEvents event) {
         switch (event) {
             case OnCreate:
                 return getOnCreate();
@@ -92,21 +88,24 @@ public class EmailNotificationConfig implements InitializingBean {
             case OnMessage:
                 return getOnMessage();
             default:
-                return Collections.emptyList();
+                return new EmailTemplateConfig();
         }
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
         for (SubscriptionEvents eventId : SubscriptionEvents.values()) {
-            log.info("Templates for {}:", eventId);
-            for (EmailTemplateConfig template : get(eventId)) {
+            log.info("Template for {}:", eventId);
+            EmailTemplateConfig cfg = get(eventId);
+            log.info("Subject: {}", cfg.getSubject());
+            for (EmailTemplateContentConfig template : cfg.getContent()) {
                 log.info("- Type: {}", template.getType());
                 log.info("  Header: {}", template.getHeader());
                 log.info("  Footer: {}", template.getFooter());
                 log.info("  Content: {}", template.getContent());
                 log.info("  Message: {}", template.getMessage());
             }
+            log.info("--");
         }
     }
 
