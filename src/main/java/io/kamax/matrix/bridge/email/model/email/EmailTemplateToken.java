@@ -29,6 +29,10 @@ public enum EmailTemplateToken {
     Sender("%SENDER%"),
     SenderName("%SENDER_NAME%"),
     SenderAddress("%SENDER_ADDRESS%"),
+
+    /**
+     * The ID of the attachment that will contain the sender avatar picture
+     */
     SenderAvatar("%SENDER_AVATAR%"),
     ReceiverAddress("%RECEIVER_ADDRESS%"),
     Room("%ROOM%"),

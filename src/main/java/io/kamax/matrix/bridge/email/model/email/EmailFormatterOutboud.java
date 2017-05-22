@@ -21,6 +21,7 @@
 package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.MatrixID;
+import io.kamax.matrix._MatrixContent;
 import io.kamax.matrix._MatrixUser;
 import io.kamax.matrix.bridge.email.config.ServerConfig;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
@@ -76,6 +77,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     private DateTimeFormatter hourFormatter = DateTimeFormatter.ofPattern("HH");
     private DateTimeFormatter minFormatter = DateTimeFormatter.ofPattern("mm");
     private DateTimeFormatter secFormatter = DateTimeFormatter.ofPattern("ss");
+    private String senderAvatarId = "sender.avatar@matrix";
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -101,8 +103,8 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         template = StringUtils.replace(template, EmailTemplateToken.ReceiverAddress.getToken(), data.getReceiverAddress());
         template = StringUtils.replace(template, EmailTemplateToken.SenderAddress.getToken(), data.getSenderAddress());
         template = StringUtils.replace(template, EmailTemplateToken.SenderName.getToken(), data.getSenderName());
+        template = StringUtils.replace(template, EmailTemplateToken.SenderAvatar.getToken(), senderAvatarId);
         template = StringUtils.replace(template, EmailTemplateToken.Sender.getToken(), data.getSender());
-        template = StringUtils.replace(template, EmailTemplateToken.SenderAvatar.getToken(), data.getSenderAvatar());
         template = StringUtils.replace(template, EmailTemplateToken.RoomAddress.getToken(), data.getRoomAddress());
         template = StringUtils.replace(template, EmailTemplateToken.RoomName.getToken(), data.getRoomName());
         template = StringUtils.replace(template, EmailTemplateToken.Room.getToken(), data.getRoom());
@@ -149,12 +151,36 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         body.setSubType("alternative");
 
         for (_BridgeMessageContent content : contents) {
+            MimeMultipart contentBody = new MimeMultipart();
+            contentBody.setSubType("related");
+
             Optional<_EmailTemplateContent> contentTemplateOpt = template.getContent(content.getMime());
             if (!contentTemplateOpt.isPresent()) {
                 continue;
             }
 
-            body.addBodyPart(makeBodyPart(data, contentTemplateOpt.get(), content));
+            _EmailTemplateContent contentTemplate = contentTemplateOpt.get();
+            contentBody.addBodyPart(makeBodyPart(data, contentTemplate, content));
+
+            if (contentTemplate.getContent().contains(EmailTemplateToken.SenderAvatar.getToken()) &&
+                    data.getSenderAvatar().isValid()) {
+                log.info("Adding avatar for sender");
+
+                MimeBodyPart avatarBp = new MimeBodyPart();
+                _MatrixContent avatar = data.getSenderAvatar();
+                String filename = avatar.getFilename().orElse("unknown." + avatar.getType().replace("image/", ""));
+
+                avatarBp.setContent(avatar.getData(), avatar.getType());
+                avatarBp.setContentID("<" + senderAvatarId + ">");
+                avatarBp.setDisposition("inline; filename=" + filename + "; size=" + avatar.getData().length + ";");
+
+                contentBody.addBodyPart(avatarBp);
+            }
+
+            MimeBodyPart part = new MimeBodyPart();
+            part.setContent(contentBody);
+
+            body.addBodyPart(part);
         }
 
         return makeEmail(data, template, body, allowReply);
@@ -207,6 +233,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         // TODO refactor with duplicated code within get()
         _MatrixClient mxClient = sub.getMatrixEndpoint().getClient();
         _MatrixUser userSource = msg.getSender();
+        Optional<_MatrixContent> userAvatar = userSource.getAvatar();
         LocalDateTime ldt = LocalDateTime.ofInstant(msg.getTime(), ZoneOffset.systemDefault());
         TokenData tokenData = new TokenData(sub.getEmailEndpoint().getChannelId());
         tokenData.setManageUrl(getSubscriptionManageLink(sub.getEmailEndpoint().getChannelId()));
@@ -215,6 +242,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         tokenData.setTimeSec(ldt.format(secFormatter));
         tokenData.setSenderAddress(userSource.getId().getId());
         tokenData.setSenderName(userSource.getName().orElse(""));
+        userAvatar.ifPresent(tokenData::setSenderAvatar);
         tokenData.setSender(StringUtils.defaultIfBlank(tokenData.getSenderName(), tokenData.getSenderAddress()));
         tokenData.setReceiverAddress(sub.getEmailEndpoint().getIdentity());
         tokenData.setRoomAddress(sub.getMatrixEndpoint().getChannelId());
@@ -242,6 +270,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
 
         _MatrixClient mxClient = ev.getSubscription().getMatrixEndpoint().getClient();
         _MatrixUser userSource = mxClient.getUser(new MatrixID(ev.getInitiator()));
+        Optional<_MatrixContent> userAvatar = userSource.getAvatar();
         LocalDateTime ldt = LocalDateTime.ofInstant(ev.getTime(), ZoneOffset.systemDefault());
         TokenData tokenData = new TokenData(ev.getSubscription().getEmailEndpoint().getChannelId());
         tokenData.setManageUrl(getSubscriptionManageLink(ev.getSubscription().getEmailEndpoint().getChannelId()));
@@ -250,6 +279,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         tokenData.setTimeSec(ldt.format(secFormatter));
         tokenData.setSenderAddress(userSource.getId().getId());
         tokenData.setSenderName(userSource.getName().orElse(""));
+        userAvatar.ifPresent(tokenData::setSenderAvatar);
         tokenData.setSender(StringUtils.defaultIfBlank(tokenData.getSenderName(), tokenData.getSenderAddress()));
         tokenData.setReceiverAddress(ev.getSubscription().getEmailEndpoint().getIdentity());
         tokenData.setRoomAddress(ev.getSubscription().getMatrixEndpoint().getChannelId());
@@ -277,7 +307,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         private String sender;
         private String senderName;
         private String senderAddress;
-        private String senderAvatar;
+        private _MatrixContent senderAvatar;
         private String receiverAddress;
         private String room;
         private String roomName;
@@ -341,11 +371,11 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             this.senderAddress = senderAddress;
         }
 
-        String getSenderAvatar() {
+        _MatrixContent getSenderAvatar() {
             return senderAvatar;
         }
 
-        void setSenderAvatar(String senderAvatar) {
+        void setSenderAvatar(_MatrixContent senderAvatar) {
             this.senderAvatar = senderAvatar;
         }
 
