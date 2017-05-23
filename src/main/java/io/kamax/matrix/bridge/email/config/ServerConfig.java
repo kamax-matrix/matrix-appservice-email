@@ -63,4 +63,5 @@ public class ServerConfig implements InitializingBean {
             host = "http://" + domain + ":" + port;
         }
     }
+
 }

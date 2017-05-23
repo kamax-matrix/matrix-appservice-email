@@ -3,8 +3,11 @@ server:
   # HTTP Port to listen to by default
   port: 8091
 
-  # Domain to which this
+  # Default domain used for building URIs and generating HS config
   domain: "localhost"
+
+  # Specific host used to build URL of the subscription portal, in case this service is behind a reverse proxy
+  # host: "https://my.public.domain.example.org"
 
 
 # Matrix side configuration
@@ -20,10 +23,10 @@ matrix:
     host: "http://localhost:8008"
 
     # The token used by the AS when communicating with the HS
-    asToken: "MY_SECRET_AS_TOKEN"
+    asToken: "MY_SECRET_AS_TOKEN_CHANGE_ME"
 
     # The token used by the HS when communicating with the AS
-    hsToken: "MY_SECRET_HS_TOKEN"
+    hsToken: "MY_SECRET_HS_TOKEN_CHANGE_ME"
 
     # The localpart of the AS global user. The domain will always be the one of the HS
     localpart: "appservice-email"
@@ -32,27 +35,21 @@ matrix:
     #
     # Values that will be replaced
     users:
-        # If this pattern is exclusive, used to generate HS config
-      - exclusive: true
-
         # Values that will be replaced:
         #
-        # %EMAIL%:
-        #   - Will be replaced by the full e-mail address, after doing a transform on the invalid MXID characters
-        #   - Will be replaced by "*" in the generated HS config
-        template: "email_%EMAIL%"
+        # %EMAIL%   Replaced by the full e-mail address, after doing a transform on the invalid MXID characters
+      - template: "email_%EMAIL%"
 
-
-    # Patterns of Room IDs (placeholder, not used)
-    ids: []
-
-    # Patterns of Room aliases (placeholder, not used)
-    aliases: []
+    # Path where the HS registration config file should be generated
+    # This file is generated each time the AS is started
+    # If this is empty, the file is not generated and must be manually maintained
+    registrationFile: "matrix-appservice-email.yaml"
 
   # Identity server configuration
   identity:
 
     # Locapart template to use when generating virtual users.
+    # This should be the same value as the "first" template config item in the users template
     #
     # Supported token:
     #   %EMAIL%     Replaced by an identifier representing the e-mail address
@@ -65,7 +62,6 @@ email:
   # E-mail template to use to identity which subscription the message belongs to.
   # This will typically be used in:
   #  - the 'Reply-To:' header in outgoing e-mail
-  #  - the 'From:' header in incoming e-mail
   #
   # Variables that will be replaced:
   #  - %KEY%    Subscription ID that uniquely identity a bridge user in a room
@@ -76,6 +72,7 @@ email:
 
     # Type of connector
     # Supported values:
+    #  - imaps
     #  - imap
     #  - pop3
     type: "imap"
@@ -84,7 +81,7 @@ email:
     host: "localhost"
 
     # Port to connect to, mandatory
-    port: 993
+    port: 143
 
     # Username for the connection
     login: "matrix-appservice-email"
@@ -118,7 +115,10 @@ email:
     # E-mail address to use in the 'From:' header
     email: "matrix-appservice-email@localhost"
 
-    # Display name to use in the 'From:' header
+    # Default display name to use in the 'From:' header
+    # This will typically only be used if the user that triggered a notification is the same as the receiver.
+    # Else, the sender display name will be used, e.g. if a Matrix user sends a message to an e-mail user.
+    #
     # An empty value will only set the e-mail in the header
     name: "Matrix E-mail Bridge"
 
@@ -126,42 +126,83 @@ email:
 # Subscription management
 subscription:
 
+  # Persistence storage configuration for subscriptions
+  # Currently supported storages:
+  #   - SQLite
   storage:
+
+    # SQLite configuration
     sqlite:
+
+      # Where the SQLite DB file should be located
       location: "as-subscriptions.db"
 
+  # Global configuration for notifications
+  #
+  # Notifications can be configured per side of the bridge (e-mail or matrix) and per event.
+  # List of supported events:
+  # - onCreate    When a new subscription is created. Currently, only when a Matrix user invites an E-mail virtual user to a room.
+  # - onMessage   When a message is sent to a Matrix room. This is triggered for both Matrix and E-mail users.
+  # - onDestroy   When a subscription is destroyed, either by kicking a virtual user from the room, or by cancelling a subscription from the portal.
   notification:
+
+    # E-mail notifications configuration
+    #
+    # E-mail notifications are composed of a subject and content.
+    # subject is a string configuration property
+    # content is an array of properties, each content mapping to an e-mail Part.
+    #
+    # content properties:
+    # - type      MIME type for the content. This will be matched, if possible, to the content type(s) from either side of the bridge.
+    # - header    Path to the header template file that can be shared across templates. If empty, will not be included.
+    # - footer    Path to the footer template file that can be shared across templates. If empty, will not be included.
+    # - content   Path to the content template file. Must be set
+    #
+    # Subject and content can contain various placeholder tokens that will be replaced when creating the notification itself.
+    # Tokens that can be used in templates:
+    # - %MSG_CONTENT%         Content, if applicable, that comes with the event. e.g. onMessage event will have this
+    #                         token contain the actual message sent
+    #
+    # - %MSG_TIME_HOUR%       Hour at which the event was triggered or message sent, in 24H format with leading 0
+    #
+    # - %MSG_TIME_MIN%        Minutes at which the event was triggered or message sent, with leading 0
+    #
+    # - %MSG_TIME_SEC%        Seconds at which the event was triggered or message sent, with leading 0
+    #
+    # - %SENDER%              Best available display name for the event source/message sender
+    #                         This would translate to the Matrix display name or, if not available, to the Matrix ID
+    #
+    # - %SENDER_NAME%         Source/Sender display name, empty if none is set
+    #
+    # - %SENDER_ADDRESS%      Source/Sender address, always populated
+    #
+    # - %SENDER_AVATAR%       Attachment ID for the Source/Sender avatar/icon. This can be used in HTML templates
+    #                         <img id="%SENDER_AVATAR%" src="cid:%SENDER_AVATAR%"> to include the avatar
+    #
+    # - %RECEIVER_ADDRESS%    Address of the notification receiver. Typically set to the e-mail address of the user
+    #
+    # - %ROOM%                Best available display name of the Matrix room to which the subscription is linked
+    #                         This would translate to the Matrix display name or, if not available, to the Matrix ID
+    #
+    # - %ROOM_NAME%           Room display name, empty if none is set
+    #
+    # - %ROOM_ADDRESS%        Room address, always populated
+    #
+    # - %MANAGE_URL%          URL to the subscription management portal page of the user
+    #
     email:
-      # List of body parts to send. An empty list will disable e-mail sending on this event.
       onCreate:
           subject: "%SENDER% invited you to a new Matrix conversation"
           content:
-            # Mime type of text content. Typical value:
-            #  - text/plain
-            #  - text/html
           - type: "text/plain"
-
-            # Location of the header template to use
             header: "classpath:templates/email/header.txt"
-
-            # Location of the footer template to use
             footer: "classpath:templates/email/footer.txt"
-
-            # Location of the content template to use
             content: "classpath:templates/email/onSubCreate-content.txt"
 
           - type: "text/html"
             header: "classpath:templates/email/header.html"
             footer: "classpath:templates/email/footer.html"
             content: "classpath:templates/email/onSubCreate-content.html"
-
-      onMute:
-        # Empty content will disable this event
-        content: []
-
-      onUnmute:
-        # Empty content will disable this event
-        content: []
 
       onDestroy:
         subject: "Matrix conversation in room %ROOM% has been terminated"
@@ -192,6 +233,4 @@ subscription:
     # Only boolean values
     matrix:
       # 'onCreate' and 'onMessage' are not supported here
-      onMute: true
-      onUnmute: true
       onDestroy: true

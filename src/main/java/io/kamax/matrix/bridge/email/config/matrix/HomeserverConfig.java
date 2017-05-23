@@ -45,8 +45,6 @@ public class HomeserverConfig implements InitializingBean {
     private String hsToken;
     private String localpart;
     private List<EntityTemplate> users;
-    private List<EntityTemplate> ids;
-    private List<EntityTemplate> aliases;
 
     public String getDomain() {
         return mxCfg.getDomain();
@@ -92,34 +90,10 @@ public class HomeserverConfig implements InitializingBean {
         this.users = users;
     }
 
-    public List<EntityTemplate> getIds() {
-        return ids;
-    }
-
-    public void setIds(List<EntityTemplate> ids) {
-        this.ids = ids;
-    }
-
-    public List<EntityTemplate> getAliases() {
-        return aliases;
-    }
-
-    public void setAliases(List<EntityTemplate> aliases) {
-        this.aliases = aliases;
-    }
-
     @Override
     public void afterPropertiesSet() throws Exception {
         if (users == null) {
             users = new ArrayList<>();
-        }
-
-        if (ids == null) {
-            ids = new ArrayList<>();
-        }
-
-        if (aliases == null) {
-            aliases = new ArrayList<>();
         }
 
         if (StringUtils.isBlank(host)) {
@@ -133,14 +107,6 @@ public class HomeserverConfig implements InitializingBean {
         log.info("Localpart: {}", getLocalpart());
         log.info("Users:");
         for (EntityTemplate p : getUsers()) {
-            log.info("- {}", p);
-        }
-        log.info("Rooms IDs:");
-        for (EntityTemplate p : getIds()) {
-            log.info("- {}", p);
-        }
-        log.info("Room Aliases:");
-        for (EntityTemplate p : getAliases()) {
             log.info("- {}", p);
         }
     }

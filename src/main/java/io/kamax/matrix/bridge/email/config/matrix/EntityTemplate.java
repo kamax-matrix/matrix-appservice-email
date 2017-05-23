@@ -25,16 +25,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class EntityTemplate {
 
-    private boolean exclusive;
     private String template;
-
-    public boolean isExclusive() {
-        return exclusive;
-    }
-
-    public void setExclusive(boolean exclusive) {
-        this.exclusive = exclusive;
-    }
 
     public String getTemplate() {
         return template;
@@ -47,8 +38,7 @@ public class EntityTemplate {
     @Override
     public String toString() {
         return "EntityPattern{" +
-                "exclusive=" + exclusive +
-                ", template='" + template + '\'' +
+                "template='" + template + '\'' +
                 '}';
     }
 
