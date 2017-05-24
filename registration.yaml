@@ -1,7 +1,7 @@
 id: "appservice-email"
 url: "http://localhost:8091"
-as_token: "MY_SECRET_AS_TOKEN"
-hs_token: "MY_SECRET_HS_TOKEN"
+as_token: "MY_SECRET_AS_TOKEN_CHANGE_ME"
+hs_token: "MY_SECRET_HS_TOKEN_CHANGE_ME"
 sender_localpart: "appservice-email"
 namespaces:
   users:

@@ -20,6 +20,12 @@
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
+apply plugin: 'docker'
+
+group = 'kamax.io'
+
+def configFile = "application.yaml"
+def distBinDir = "${project.buildDir.absolutePath}/dist/bin"
 
 buildscript {
     repositories {
@@ -28,6 +34,7 @@ buildscript {
 
     dependencies {
         classpath 'org.springframework.boot:spring-boot-gradle-plugin:1.5.3.RELEASE'
+        classpath 'se.transmode.gradle:gradle-docker:1.2'
     }
 }
 
@@ -52,4 +59,30 @@ dependencies {
     compile 'org.jsoup:jsoup:1.10.2'
 
     testCompile 'org.springframework.boot:spring-boot-starter-test'
+}
+
+task distBin(type: Copy, dependsOn: ['build']) {
+    from jar
+    from "${projectDir}/${configFile}"
+    from "${projectDir}/registration-sample.yaml"
+    into distBinDir
+
+    doLast {
+        project.exec {
+            commandLine('chmod',  'a+x', "${distBinDir}/${jar.archiveName}")
+        }
+    }
+}
+
+task buildDocker(type: Docker, dependsOn: build) {
+    push = false
+    applicationName = jar.baseName
+    dockerfile = file('src/main/docker/Dockerfile')
+
+    doFirst {
+        copy {
+            from jar
+            into stageDir
+        }
+    }
 }
