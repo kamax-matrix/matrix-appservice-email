@@ -76,7 +76,7 @@ task distBin(type: Copy, dependsOn: ['build']) {
 
 task buildDocker(type: Docker, dependsOn: build) {
     push = false
-    applicationName = jar.baseName
+    applicationName = "mxasd-email"
     dockerfile = file('src/main/docker/Dockerfile')
 
     doFirst {
