@@ -31,12 +31,11 @@ Setup can either be done via manually running the bridge or using a Docker image
 You will require Java 1.8 or higher to compile and run this bridge.
 
 ## Overview
-1. Build the bridge
-2. Configure the bridge
-3. Run the bridge manually or via Docker
-4. Configure your HS to read the bridge registration file
-5. Install mxisd
-6. Configure mxisd to use this bridge for unknown 3PID lookup
+1. [Build the bridge](#build)
+2. [Configure the bridge](#configure)
+3. [Run the bridge](#run) manually or via Docker
+4. [Configure your HS](#homeserver) to read the bridge registration file
+5. [Install and Configure mxisd](#mxisd) to use this bridge for unknown 3PID lookup
 7. Configure your Matrix client to use mxisd as the Identity Server
 8. Invite someone to a room with an e-mail which has no 3PID mapping
 9. Start chatting!
@@ -152,7 +151,7 @@ app_service_config_files:
 ## mxisd
 Follow instructions on the [git repo README](https://github.com/kamax-io/mxisd/blob/master/README.md) until you have a working setup.
 
-Add/edit the following sections in the mxisd configuration file and restart mxisd if needed:
+Add/edit the following sections in the mxisd configuration file, adapt the AS URL, and restart if needed:
 ```
 lookup:
   recursive:
