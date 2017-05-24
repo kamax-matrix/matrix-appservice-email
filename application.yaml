@@ -40,11 +40,6 @@ matrix:
         # %EMAIL%   Replaced by the full e-mail address, after doing a transform on the invalid MXID characters
       - template: "email_%EMAIL%"
 
-    # Path where the HS registration config file should be generated
-    # This file is generated each time the AS is started
-    # If this is empty, the file is not generated and must be manually maintained
-    registrationFile: "matrix-appservice-email.yaml"
-
   # Identity server configuration
   identity:
 
