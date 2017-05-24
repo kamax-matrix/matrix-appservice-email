@@ -61,6 +61,10 @@ public class ServerConfig implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
         if (StringUtils.isBlank(host)) {
             host = "http://" + domain + ":" + port;
+        } else {
+            while (host.endsWith("/")) { // TODO use regexp?
+                host = host.substring(0, host.length() - 1);
+            }
         }
     }
 
