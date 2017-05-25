@@ -23,8 +23,9 @@ package io.kamax.matrix.bridge.email.model.email;
 import io.kamax.matrix.MatrixID;
 import io.kamax.matrix._MatrixContent;
 import io.kamax.matrix._MatrixUser;
-import io.kamax.matrix.bridge.email.config.ServerConfig;
+import io.kamax.matrix.bridge.email.config.email.EmailReceiverConfig;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
+import io.kamax.matrix.bridge.email.config.subscription.SubscriptionPortalConfig;
 import io.kamax.matrix.bridge.email.model.BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
@@ -64,10 +65,13 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     private Logger log = LoggerFactory.getLogger(EmailFormatterOutboud.class);
 
     @Autowired
-    private ServerConfig srvCfg;
+    private EmailSenderConfig sendCfg;
 
     @Autowired
-    private EmailSenderConfig sendCfg;
+    private EmailReceiverConfig recvCfg;
+
+    @Autowired
+    private SubscriptionPortalConfig portalCfg;
 
     @Autowired
     private _EmailTemplateManager templateMgr;
@@ -88,7 +92,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     }
 
     private String getSubscriptionManageLink(String token) {
-        return srvCfg.getHost() + "/subscription?token=" + token;
+        return portalCfg.getUrl().toExternalForm() + "/subscription?token=" + token;
     }
 
     private String getHtml(String text) {
@@ -136,7 +140,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     private MimeMessage makeEmail(TokenData data, _EmailTemplate template, MimeMultipart body, boolean allowReply) throws MessagingException, UnsupportedEncodingException {
         MimeMessage msg = new MimeMessage(session);
         if (allowReply) {
-            msg.setReplyTo(InternetAddress.parse(sendCfg.getTemplate().replace("%KEY%", data.getKey())));
+            msg.setReplyTo(InternetAddress.parse(recvCfg.getEmail().replace("%KEY%", data.getKey())));
         }
 
         String sender = data.isSelf() ? sendCfg.getName() : data.getSenderName();

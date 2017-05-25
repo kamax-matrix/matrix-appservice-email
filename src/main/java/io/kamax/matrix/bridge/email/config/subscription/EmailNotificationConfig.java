@@ -36,8 +36,6 @@ public class EmailNotificationConfig implements InitializingBean {
     private EmailTemplateConfig onCreate;
     private EmailTemplateConfig onDestroy;
     private EmailTemplateConfig onMessage;
-    private EmailTemplateConfig onMute;
-    private EmailTemplateConfig onUnmute;
 
     public EmailTemplateConfig getOnCreate() {
         return onCreate;
@@ -61,22 +59,6 @@ public class EmailNotificationConfig implements InitializingBean {
 
     public void setOnMessage(EmailTemplateConfig onMessage) {
         this.onMessage = onMessage;
-    }
-
-    public EmailTemplateConfig getOnMute() {
-        return onMute;
-    }
-
-    public void setOnMute(EmailTemplateConfig onMute) {
-        this.onMute = onMute;
-    }
-
-    public EmailTemplateConfig getOnUnmute() {
-        return onUnmute;
-    }
-
-    public void setOnUnmute(EmailTemplateConfig onUnmute) {
-        this.onUnmute = onUnmute;
     }
 
     public EmailTemplateConfig get(SubscriptionEvents event) {

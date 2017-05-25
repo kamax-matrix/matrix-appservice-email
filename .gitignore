@@ -6,10 +6,11 @@ out/
 # Intellij IDEA
 .idea/
 
-# Local files
-application-local.yaml
+# Local config files
+/application.yaml
+/application-*.yaml
 
 # Generated files
-registration.yaml
-as.db
-as-*.db
+/registration.yaml
+/as.db
+/as-*.db

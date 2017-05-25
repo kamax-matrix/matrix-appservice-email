@@ -22,7 +22,7 @@ package io.kamax.matrix.bridge.email.model.matrix;
 
 import io.kamax.matrix.MatrixID;
 import io.kamax.matrix._MatrixID;
-import io.kamax.matrix.bridge.email.config.matrix.EntityTemplate;
+import io.kamax.matrix.bridge.email.config.matrix.EntityTemplateConfig;
 import io.kamax.matrix.bridge.email.config.matrix.HomeserverConfig;
 import io.kamax.matrix.bridge.email.config.subscription.MatrixNotificationConfig;
 import io.kamax.matrix.bridge.email.model.BridgeEmailCodec;
@@ -65,7 +65,7 @@ public class MatrixManager implements _MatrixManager, InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         patterns = new ArrayList<>();
-        for (EntityTemplate entityTemplate : hsCfg.getUsers()) {
+        for (EntityTemplateConfig entityTemplate : hsCfg.getUsers()) {
             patterns.add(Pattern.compile(entityTemplate.getTemplate().replace("%EMAIL%", "(?<email>.*)")));
         }
         if (patterns.size() < 1) {

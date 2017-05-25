@@ -31,8 +31,6 @@ public class MatrixNotificationConfig {
     private boolean onCreate = false;
     private boolean onDestroy = false;
     private boolean onMessage = false;
-    private boolean onMute = false;
-    private boolean onUnmute = false;
 
     public boolean getOnCreate() {
         return onCreate;
@@ -56,22 +54,6 @@ public class MatrixNotificationConfig {
 
     public void setOnMessage(boolean onMessage) {
         this.onMessage = onMessage;
-    }
-
-    public boolean getOnMute() {
-        return onMute;
-    }
-
-    public void setOnMute(boolean onMute) {
-        this.onMute = onMute;
-    }
-
-    public boolean getOnUnmute() {
-        return onUnmute;
-    }
-
-    public void setOnUnmute(boolean onUnmute) {
-        this.onUnmute = onUnmute;
     }
 
     public boolean get(SubscriptionEvents event) {

@@ -23,7 +23,7 @@ package io.kamax.matrix.bridge.email.config.matrix;
 import org.springframework.stereotype.Component;
 
 @Component
-public class EntityTemplate {
+public class EntityTemplateConfig {
 
     private String template;
 

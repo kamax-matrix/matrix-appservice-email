@@ -20,7 +20,6 @@
 
 package io.kamax.matrix.bridge.email.config.email;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -28,14 +27,12 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties("email.receiver")
 public class EmailReceiverConfig {
 
-    @Autowired
-    private EmailConfig cfg;
-
     private String type;
     private String host;
     private int port;
     private String login;
     private String password;
+    private String email;
 
     public String getType() {
         return type;
@@ -77,8 +74,12 @@ public class EmailReceiverConfig {
         this.password = password;
     }
 
-    public String getTemplate() {
-        return cfg.getTemplate();
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
 }

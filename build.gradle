@@ -24,7 +24,7 @@ apply plugin: 'docker'
 
 group = 'kamax.io'
 
-def configFile = "application.yaml"
+def configFile = "src/main/resources/application.yaml"
 def distBinDir = "${project.buildDir.absolutePath}/dist/bin"
 
 buildscript {
@@ -61,10 +61,8 @@ dependencies {
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
 
-task distBin(type: Copy, dependsOn: ['build']) {
+task buildBin(type: Copy, dependsOn: ['build']) {
     from jar
-    from "${projectDir}/${configFile}"
-    from "${projectDir}/registration-sample.yaml"
     into distBinDir
 
     doLast {

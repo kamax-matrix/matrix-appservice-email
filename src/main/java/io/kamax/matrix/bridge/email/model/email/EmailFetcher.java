@@ -53,7 +53,7 @@ public class EmailFetcher implements _EmailFetcher, InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        recvPattern = Pattern.compile(recv.getTemplate().replace("+", "\\+").replace("%KEY%", "(?<" + keyGroupName + ">.+?)"));
+        recvPattern = Pattern.compile(recv.getEmail().replace("+", "\\+").replace("%KEY%", "(?<" + keyGroupName + ">.+?)"));
         listeners = new ArrayList<>();
     }
 

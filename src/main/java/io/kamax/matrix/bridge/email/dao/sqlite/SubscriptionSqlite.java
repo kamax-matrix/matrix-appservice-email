@@ -53,7 +53,7 @@ public class SubscriptionSqlite implements InitializingBean, _SubscriptionDao {
         log.info("SQLite DB: {}", dbFile.getPath());
 
         if (!dbFile.exists()) {
-            log.info("SQLlite file does not exist, provisioning fresh DB");
+            log.info("SQLlite DB file does not exist, provisioning");
         }
 
         conn = DriverManager.getConnection("jdbc:sqlite:" + dbFile.getPath());

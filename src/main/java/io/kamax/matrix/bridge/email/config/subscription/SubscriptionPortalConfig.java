@@ -18,33 +18,51 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.config.matrix;
+package io.kamax.matrix.bridge.email.config.subscription;
+
 
 import io.kamax.matrix.bridge.email.exception.InvalidConfigurationException;
-import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 @Configuration
-@ConfigurationProperties("matrix")
-public class MatrixConfig implements InitializingBean {
+@ConfigurationProperties("subscription.portal")
+public class SubscriptionPortalConfig implements InitializingBean {
 
-    private String domain;
+    private Logger log = LoggerFactory.getLogger(SubscriptionPortalConfig.class);
 
-    public String getDomain() {
-        return domain;
+    private URL urlValidated;
+
+    public URL getUrl() {
+        return urlValidated;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setUrl(String url) {
+        try {
+            // Remove any trailing slash
+            while (url.endsWith("/")) {
+                url = url.substring(0, url.length() - 1);
+            }
+
+            urlValidated = new URL(url);
+        } catch (MalformedURLException e) {
+            throw new InvalidConfigurationException(url + " is not a valid URL for the subscription portal");
+        }
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (StringUtils.isBlank(domain)) {
-            throw new InvalidConfigurationException("Matrix domain must be configured");
+        if (urlValidated == null) {
+            throw new InvalidConfigurationException("Subscription Portal URL must be set");
         }
+
+        log.info("Subscription Portal URL: {}", urlValidated.toExternalForm());
     }
 
 }

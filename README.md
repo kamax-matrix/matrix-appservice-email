@@ -7,8 +7,8 @@ This is an E-mail bridge for Matrix using the Application Services (AS) API.
 This bridge will pass all Matrix messages from rooms where E-mail virtual users are invited via E-mail, and all E-mail
 messages into the corresponding Matrix room.
 
-This software is currently in alpha phase and is not ready for production.
-Your feedback and ideas are extremely welcome - please help us by opening an issue or joining us on Matrix at
+This software is currently in alpha phase and is not ready for production: Your feedback and ideas are extremely welcome!  
+Please help us by opening an issue or joining us on Matrix at
 [#mxasd-email:kamax.io](https://matrix.to/#/#mxasd-email:kamax.io)
 
 # Features
@@ -17,6 +17,13 @@ Your feedback and ideas are extremely welcome - please help us by opening an iss
 - E-mail <-> Matrix <-> E-mail forwarding, if several bridge users are present within a room
 - Fully configuration notification templates, per event
 - Subscription portal where E-mail users can manage their notifications
+
+# Overview
+This bridge will map single virtual users to single e-mail addresses, allowing people without Matrix account to be invited
+and participate into Matrix rooms.  
+E-mail users can only participate in a room after being invite into it, and cannot subscribe/join on their own.
+
+This bridge does NOT (currently) map entire rooms to a single E-mail address, like a mailing-list.
 
 # Requirements
 You will need Java 8 to build and run this bridge.
@@ -30,7 +37,7 @@ using its Matrix ID if one is found, or inviting a virtual user to directly enab
 Setup can either be done via manually running the bridge or using a Docker image.
 You will require Java 1.8 or higher to compile and run this bridge.
 
-## Overview
+## Steps overview
 1. [Build the bridge](#build)
 2. [Configure the bridge](#configure)
 3. [Run the bridge](#run) manually or via Docker
@@ -48,14 +55,15 @@ cd matrix-appservice-email
 git submodule update --init
 ```
 ### Manual
-Run the following command in the repo base directory to produce a distribution directory which will contain all required files and cd into it:
+Run the following command in the repo base directory to produce the distribution directory `build/dist/bin` which will
+contain all required files and will allow you to test the bridge quickly.  
+**It is highly recommended to use a less volatile directory to store those as this directory can be remove with a clean command!**
 ```
-./gradlew distBin
-cd build/dist/bin
+./gradlew buildBin
 ```
 
 ### Docker
-Run the following command in the repo base directory to produce a Docker image `kamax.io/matrix-appservice-email`
+Run the following command in the repo base directory to produce a Docker image `kamax.io/mxasd-email`
 ```
 ./gradlew buildDocker
 ```
@@ -64,8 +72,8 @@ will interfere with the build (`permission denied` to connect to the Docker sock
 
 If you cannot fulfil these requirements and need to manually build the Docker image, prepare the staging directory:
 ```
-./gradlew build distBin
-cp sec/main/docker/Dockerfile build/dist/bin
+./gradlew buildBin
+cp src/main/docker/Dockerfile build/dist/bin
 ```
 You can then run your usual build command pointing to `build/dist/bin` like so
 ```
@@ -73,73 +81,31 @@ sudo docker build build/dist/bin -t kamax.io/mxasd-email
 ```
 
 ## Configure
-With your favorite editor, open `application.yaml` which should be either:
-- In `build/dist/bin` if you went for the manual build method
-- Copied to a dedicated directory which will be presented as a volume, if you went for the Docker build method
+Copy the default config file located in `src/main/resources/application.yaml` into a permanent directory depending on your build type:
+- In `build/dist/bin` by default if you went for the manual build method, but **you should use a less volatile location**
+- A dedicated directory which will be presented as a volume, if you went for the Docker build method, e.g. `/data/mxasd-email`
 
-While the configuration file is quite extensive, only the `matrix` and `email` sections need to be configured to run the bridge.  
-To run behind a reverse proxy, make sure the `server.host` key is configured (commented out by default)
-
-If you would like to use a dedicated configuration file for your changes, you can use the Spring configuration profiles feature.  
-This will allow you to mix both configuration file, keeping default config values and only overwriting those of interest.  
-Replacing `<profile_name>` by an arbitrary profile name (except `default`), e.g. `main`, create a new config file next to
-the default file and populate it with only the relevant sections.  
-This mechanism is explained in more details in the [Spring Boot documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-external-config.html#boot-features-external-config-profile-specific-properties)
-
-For example, you could have `application-main.yaml` which only contains the following:
-```
-email:
-  template: "matrix-appservice-email+%KEY%@example.org"
-
-  receiver:
-    type: "imaps"
-    host: "imap.example.org"
-    port: 993
-    login: "matrix-appservice-email@example.org"
-    password: "mypassword"
-
-  sender:
-    host: "smtp.example.org"
-    port: 587
-    tls: 1
-    login: "matrix-appservice-email"
-    password: "mypassword"
-    email: "matrix-appservice-email@example.org"
-    name: "Matrix E-mail Bridge"
-```
-It is also possible to add profiles to the main config file. For more information, see the [Spring Boot documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/boot-features-profiles.html#boot-features-adding-active-profiles)
+The configuration file contains a detailed description for each possible configuration item.
 
 ## Run
-After editing the configuration file, you can now run the bridge.  
-Follow the steps depending on your build path.
-
 ### Manual
-If you edited the default config file:
+Change into the directory containing the main jar (`build/dist/bin` by default) and run it:
 ```
+cd build/dist/bin
 ./matrix-appservice-email.jar
 ```
 
-If you use a profile configuration:
-```
-./matrix-appservice-email.jar --spring.profiles.active=<profile_name>
-```
-
 ### Docker
-If you edited the default config file:
+Run a new container for the newly created image, and make sure `/data/mxasd-email` is adapted to your actual location:
 ```
-docker run -p 8091:8091 -v /path/to/data:/data kamax.io/mxasd-email
-```
-
-If you use a profile configuration:
-```
-docker run -p 8091:8091 -v /path/to/data:/data -e "SPRING_PROFILES_ACTIVE=<profile_name>" kamax.io/mxasd-email
+docker run -p 8091:8091 -v /data/mxasd-email:/data kamax.io/mxasd-email
 ```
 # Integration
 ## Homeserver
 Like any bridge, a registration file must be generated which will then be added to the HS config.  
 Currently, there is no mechanism to automatically generate this config file.
 
-You can find a working example [here](https://raw.githubusercontent.com/kamax-io/matrix-appservice-email/master/registration-sample.yaml), which you should copy at the same location as the Bridge configuration file.  
+You will find a working example at `registration-sample.yaml`, which you should copy at the same location as the Bridge configuration file.  
 Configuration must match the `matrix` section in the bridge config file.
 
 The Homeserver can then be configured with:

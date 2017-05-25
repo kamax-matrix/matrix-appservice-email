@@ -20,16 +20,12 @@
 
 package io.kamax.matrix.bridge.email.config.email;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @ConfigurationProperties("email.sender")
 public class EmailSenderConfig {
-
-    @Autowired
-    private EmailConfig cfg;
 
     private String host;
     private int port;
@@ -93,10 +89,6 @@ public class EmailSenderConfig {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getTemplate() {
-        return cfg.getTemplate();
     }
 
 }

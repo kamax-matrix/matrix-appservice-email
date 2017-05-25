@@ -20,6 +20,7 @@
 
 package io.kamax.matrix.bridge.email.config.matrix;
 
+import io.kamax.matrix.bridge.email.exception.InvalidConfigurationException;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
@@ -44,7 +44,7 @@ public class HomeserverConfig implements InitializingBean {
     private String asToken;
     private String hsToken;
     private String localpart;
-    private List<EntityTemplate> users;
+    private List<EntityTemplateConfig> users;
 
     public String getDomain() {
         return mxCfg.getDomain();
@@ -82,22 +82,34 @@ public class HomeserverConfig implements InitializingBean {
         this.localpart = localpart;
     }
 
-    public List<EntityTemplate> getUsers() {
+    public List<EntityTemplateConfig> getUsers() {
         return users;
     }
 
-    public void setUsers(List<EntityTemplate> users) {
+    public void setUsers(List<EntityTemplateConfig> users) {
         this.users = users;
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        if (users == null) {
-            users = new ArrayList<>();
+        if (StringUtils.isBlank(host)) {
+            throw new InvalidConfigurationException("Matrix HS client endpoint must be configured");
         }
 
-        if (StringUtils.isBlank(host)) {
-            host = "https://" + getDomain();
+        if (StringUtils.isBlank(asToken)) {
+            throw new InvalidConfigurationException("Matrix AS token must be configured");
+        }
+
+        if (StringUtils.isBlank(hsToken)) {
+            throw new InvalidConfigurationException("Matrix HS token must be configured");
+        }
+
+        if (StringUtils.isBlank(localpart)) {
+            throw new InvalidConfigurationException("Matrix AS localpart must be configured");
+        }
+
+        if (users == null || users.isEmpty()) {
+            throw new InvalidConfigurationException("At least one Matrix user template must be configured");
         }
 
         log.info("Domain: {}", getDomain());
@@ -106,7 +118,7 @@ public class HomeserverConfig implements InitializingBean {
         log.info("HS Token: {}", getHsToken());
         log.info("Localpart: {}", getLocalpart());
         log.info("Users:");
-        for (EntityTemplate p : getUsers()) {
+        for (EntityTemplateConfig p : getUsers()) {
             log.info("- {}", p);
         }
     }

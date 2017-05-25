@@ -18,23 +18,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package io.kamax.matrix.bridge.email.config.email;
+package io.kamax.matrix.bridge.email.exception;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+public class InvalidConfigurationException extends RuntimeException {
 
-@Configuration
-@ConfigurationProperties("email")
-public class EmailConfig {
-
-    private String template;
-
-    public String getTemplate() {
-        return template;
-    }
-
-    public void setTemplate(String template) {
-        this.template = template;
+    public InvalidConfigurationException(String s) {
+        super(s);
     }
 
 }
