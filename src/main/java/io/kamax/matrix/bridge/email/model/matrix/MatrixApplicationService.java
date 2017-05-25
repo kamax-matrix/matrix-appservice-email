@@ -190,6 +190,13 @@ public class MatrixApplicationService implements _MatrixApplicationService {
         _MatrixRoom room = user.getClient().getRoom(ev.getRoomId());
 
         if (RoomMembership.Invite.is(ev.getMembership())) {
+            if (!ev.getInvitee().isValid()) {
+                log.warn("{} is not a valid MXID, declining invite", ev.getInvitee());
+
+                room.leave();
+                return;
+            }
+
             _BridgeSubscription sub = subMgr.create(ev.getSender(), ev.getTime(), user, ev.getRoomId());
             log.info("Subscription | Matrix key: {} | Email key: {}", sub.getMatrixKey(), sub.getEmailKey());
 
