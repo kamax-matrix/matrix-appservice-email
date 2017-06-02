@@ -63,6 +63,8 @@ public class MatrixApplicationService implements _MatrixApplicationService {
     @Autowired
     private _SubscriptionManager subMgr;
 
+    private String lastTransactionId;
+
     private _MatrixApplicationServiceClient validateCredentials(AHomeserverCall call) {
         if (StringUtils.isEmpty(call.getCredentials())) {
             log.warn("No credentials supplied");
@@ -129,6 +131,11 @@ public class MatrixApplicationService implements _MatrixApplicationService {
     public void push(MatrixTransactionPush transaction) {
         validateCredentials(transaction);
 
+        if (StringUtils.equals(lastTransactionId, transaction.getId())) {
+            log.info("Transaction {} has already been processed, skipping");
+            return;
+        }
+
         for (_MatrixEvent event : transaction.getEvents()) {
             if (event instanceof _RoomMembershipEvent) {
                 pushMembershipEvent((_RoomMembershipEvent) event);
@@ -138,6 +145,8 @@ public class MatrixApplicationService implements _MatrixApplicationService {
                 log.info("Unknown event type {} from {}", event.getType(), event.getSender());
             }
         }
+
+        lastTransactionId = transaction.getId();
     }
 
     private void pushMessageEvent(_RoomMessageEvent ev) {
