@@ -167,7 +167,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
             contentBody.addBodyPart(makeBodyPart(data, contentTemplate, content));
 
             if (contentTemplate.getContent().contains(EmailTemplateToken.SenderAvatar.getToken()) &&
-                    data.getSenderAvatar().isValid()) {
+                    data.getSenderAvatar() != null && data.getSenderAvatar().isValid()) {
                 log.info("Adding avatar for sender");
 
                 MimeBodyPart avatarBp = new MimeBodyPart();
