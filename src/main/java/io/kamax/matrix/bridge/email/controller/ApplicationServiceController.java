@@ -61,7 +61,7 @@ public class ApplicationServiceController {
     @ExceptionHandler({InvalidMatrixIdException.class, InvalidBodyContentException.class})
     @ResponseBody
     MatrixErrorInfo handleBadRequest(HttpServletRequest request, MatrixException e) {
-        log.error("Error when processing {} {}", request.getMethod(), request.getRequestURL(), e);
+        log.error("Error when processing {} {}", request.getMethod(), request.getServletPath(), e);
 
         return new MatrixErrorInfo(e.getErrorCode());
     }
@@ -91,7 +91,7 @@ public class ApplicationServiceController {
     @ExceptionHandler(Throwable.class)
     @ResponseBody
     MatrixErrorInfo handleGeneric(HttpServletRequest request, Throwable t) {
-        log.error("Error when processing {} {}", request.getMethod(), request.getRequestURL(), t);
+        log.error("Error when processing {} {}", request.getMethod(), request.getServletPath(), t);
 
         return new MatrixErrorInfo(t);
     }
@@ -123,7 +123,7 @@ public class ApplicationServiceController {
             HttpServletRequest request,
             @RequestParam(name = "access_token", required = false) String accessToken,
             @PathVariable String txnId) throws IOException {
-        log.info("Processing {}?{}", request.getRequestURL(), request.getQueryString());
+        log.info("Processing {}", request.getServletPath());
 
         String json = IOUtils.toString(request.getInputStream(), request.getCharacterEncoding());
         try {
