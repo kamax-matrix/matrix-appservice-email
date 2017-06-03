@@ -29,6 +29,7 @@ import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.mail.Message;
 import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
@@ -63,6 +64,7 @@ public class EmailEndPoint extends AEndPoint<String, _MatrixBridgeMessage, _Emai
     private void send(MimeMessage msg) throws MessagingException {
         msg.setHeader("X-Mailer", "matrix-appservice-email");
         msg.setSentDate(new Date());
+        msg.setRecipients(Message.RecipientType.TO, getIdentity());
 
         SMTPTransport transport = (SMTPTransport) session.getTransport("smtp");
         transport.setStartTLS(cfg.getTls() > 0);
