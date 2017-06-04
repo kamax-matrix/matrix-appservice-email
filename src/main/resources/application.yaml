@@ -231,3 +231,13 @@ subscription:
     matrix:
       # 'onCreate' and 'onMessage' are not supported here
       onDestroy: true
+
+# Logging configuration
+logging:
+  # Change the log location to whatever you want here. Leave empty or comment out to disable
+  file: "mxasd-email.log"
+  level:
+    org:
+      springframework: "WARN"
+      apache:
+        catalina: "WARN"
