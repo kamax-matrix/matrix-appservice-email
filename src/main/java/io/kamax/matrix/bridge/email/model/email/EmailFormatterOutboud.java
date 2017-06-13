@@ -96,6 +96,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     }
 
     private String getHtml(String text) {
+        text = text.replaceAll("\r\n", "<br/>").replaceAll("\n", "<br/>");
         return "<span>" + text + "</span>";
     }
 
