@@ -21,14 +21,28 @@
 package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.net.QuotedPrintableCodec;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Element;
+import org.jsoup.safety.Whitelist;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import java.util.Collections;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class GmailClientFormatter implements _EmailClientFormatter {
+@Component
+public class GmailClientFormatter extends AEmailClientFormatter {
+
+    private Logger log = LoggerFactory.getLogger(GmailClientFormatter.class);
+
+    private Pattern pattern = Pattern.compile("<div class=(3D)?\"gmail_extra\">");
 
     @Override
     public String getId() {
@@ -36,18 +50,38 @@ public class GmailClientFormatter implements _EmailClientFormatter {
     }
 
     @Override
-    public boolean matches(Message m) throws MessagingException {
+    public boolean matches(Message m, List<_BridgeMessageContent> contents) throws MessagingException {
+        for (_BridgeMessageContent content : contents) {
+            Matcher matcher = pattern.matcher(content.getContentAsString());
+            if (matcher.find()) {
+                return true;
+            }
+        }
+
         return false;
     }
 
     @Override
-    public List<Pattern> getContentPatterns(String subType) {
-        return Collections.emptyList();
-    }
+    protected String formatHtml(String content) {
+        try {
+            // TODO let's not assume the encoding
+            content = new String(QuotedPrintableCodec.decodeQuotedPrintable(content.getBytes()), StandardCharsets.UTF_8);
+        } catch (DecoderException e) {
+            log.warn("E-mail from Gmail was not quoted-printable codec, using raw HTML instead");
+        }
 
-    @Override
-    public _BridgeMessageContent format(_BridgeMessageContent content) {
-        return null;
+        Element body = Jsoup.parse(content).body();
+        Element contentDiv = body.select("div[dir='ltr']").first();
+        if (contentDiv == null) {
+            log.warn("Found no valid content in e-mail from Gmail, returning empty");
+            return "";
+        }
+
+        while (contentDiv.children().size() > 0 && contentDiv.children().last().is("br")) {
+            contentDiv.children().last().remove();
+        }
+
+        return Jsoup.clean(contentDiv.html(), Whitelist.basic());
     }
 
 }

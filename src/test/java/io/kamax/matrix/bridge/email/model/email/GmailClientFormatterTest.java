@@ -29,26 +29,26 @@ import java.io.IOException;
 
 import static org.junit.Assert.assertTrue;
 
-public class ThunderbirdClientFormatterTest {
+public class GmailClientFormatterTest {
 
-    private ThunderbirdClientFormatter formatter = new ThunderbirdClientFormatter();
+    private GmailClientFormatter formatter = new GmailClientFormatter();
 
     @Test
     public void testPlain() throws IOException {
-        File f = new File("src/test/resources/thunderbirdContent.txt");
+        File f = new File("src/test/resources/gmailContent.txt");
         assertTrue(f.getAbsolutePath(), f.canRead());
 
         String output = formatter.formatPlain(IOUtils.toString(new FileReader(f)));
-        assertTrue(output, "orly".contentEquals(output));
+        assertTrue(output, "a".contentEquals(output));
     }
 
     @Test
     public void testHtml() throws IOException {
-        File f = new File("src/test/resources/thunderbirdContent.html");
+        File f = new File("src/test/resources/gmailContent.html");
         assertTrue(f.getAbsolutePath(), f.canRead());
 
         String output = formatter.formatHtml(IOUtils.toString(new FileReader(f)));
-        assertTrue(output, "orly".contentEquals(output));
+        assertTrue(output, "a".contentEquals(output));
     }
 
 }

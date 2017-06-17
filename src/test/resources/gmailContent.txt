@@ -1,0 +1,26 @@
+a
+
+2017-06-17 1:55 GMT+02:00 John Doe <john.doe@gmail.com>:
+
+> b
+>
+> 2017-06-17 1:49 GMT+02:00 John Doe <john.doe@gmail.com>:
+>
+>> a
+>>
+>> 2017-06-17 1:49 GMT+02:00 Test User <matrix-appservice-email@localhost>:
+>>
+>>> Matrix Bridge Service
+>>>
+>>> You received a new message from Test User in the conversation
+>>> "!ktamnzNYaQveteTXqS:localhost":
+>>> [image: sender avatar] 01:49 1
+>>>
+>>> ------------------------------
+>>>
+>>> Manage your subscriptions
+>>> <http://localhost:8091/subscription?token=test>
+>>>
+>>
+>>
+>

@@ -25,15 +25,12 @@ import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import javax.mail.Message;
 import javax.mail.MessagingException;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public interface _EmailClientFormatter {
 
     String getId();
 
-    boolean matches(Message m) throws MessagingException;
-
-    List<Pattern> getContentPatterns(String subType);
+    boolean matches(Message m, List<_BridgeMessageContent> contents) throws MessagingException;
 
     _BridgeMessageContent format(_BridgeMessageContent content);
 

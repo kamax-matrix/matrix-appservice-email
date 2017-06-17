@@ -20,10 +20,7 @@
 
 package io.kamax.matrix.bridge.email.model.email;
 
-import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
-import io.kamax.matrix.bridge.email.model.BridgeMessageTextContent;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
@@ -32,15 +29,10 @@ import org.springframework.stereotype.Component;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Component
-public class ThunderbirdClientFormatter implements _EmailClientFormatter {
+public class ThunderbirdClientFormatter extends AEmailClientFormatter {
 
     @Override
     public String getId() {
@@ -48,7 +40,7 @@ public class ThunderbirdClientFormatter implements _EmailClientFormatter {
     }
 
     @Override
-    public boolean matches(Message m) throws MessagingException {
+    public boolean matches(Message m, List<_BridgeMessageContent> contents) throws MessagingException {
         String[] headers = m.getHeader("User-Agent");
         if (headers != null) {
             for (String header : headers) {
@@ -62,52 +54,7 @@ public class ThunderbirdClientFormatter implements _EmailClientFormatter {
     }
 
     @Override
-    public List<Pattern> getContentPatterns(String subType) {
-        return Collections.emptyList();
-    }
-
-    String formatPlain(String content) {
-        // TODO do a proper algorithm
-
-        try {
-            int maxLine = 0;
-
-            List<String> linesIn = IOUtils.readLines(new StringReader(content));
-            for (int i = 0; i < linesIn.size(); i++) {
-                if (linesIn.get(i).startsWith(">")) {
-                    maxLine = i - 1;
-                    break;
-                }
-            }
-
-            List<String> linesOut = new ArrayList<>();
-            boolean prevLineBlank = false;
-            for (int i = 0; i < maxLine; i++) {
-                String line = StringUtils.trimToEmpty(linesIn.get(i));
-                if (StringUtils.isBlank(line)) {
-                    if (prevLineBlank) {
-                        continue;
-                    }
-
-                    prevLineBlank = true;
-                } else {
-                    prevLineBlank = false;
-                }
-                linesOut.add(line);
-            }
-
-            if (prevLineBlank) {
-                linesOut.remove(linesOut.size() - 1);
-            }
-
-            return StringUtils.join(linesOut, System.lineSeparator());
-        } catch (IOException e) {
-            // This should never happen, we can't deal with it here
-            throw new RuntimeException(e);
-        }
-    }
-
-    String formatHtml(String content) {
+    protected String formatHtml(String content) {
         Element body = Jsoup.parse(content).body();
         body.select("blockquote[cite]").remove();
         body.select("div.moz-cite-prefix").remove();
@@ -117,17 +64,6 @@ public class ThunderbirdClientFormatter implements _EmailClientFormatter {
         }
 
         return Jsoup.clean(body.html(), Whitelist.basic());
-    }
-
-    @Override
-    public _BridgeMessageContent format(_BridgeMessageContent content) {
-        if ("text/plain".contentEquals(content.getMime())) {
-            return new BridgeMessageTextContent(formatPlain(content.getContentAsString()));
-        } else if ("text/html".contentEquals(content.getMime())) {
-            return new BridgeMessageHtmlContent(formatHtml(content.getContentAsString()));
-        } else {
-            throw new IllegalArgumentException(content.getMime() + " is not supported");
-        }
     }
 
 }

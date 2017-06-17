@@ -92,13 +92,17 @@ public class EmailFormatterInbound implements _EmailFormatterInbound {
             }
 
             for (_EmailClientFormatter f : clientFormatters) {
-                if (f.matches(msg)) {
+                if (f.matches(msg, contents)) {
+                    log.info("Using inbound formatter {}", f.getId());
+
                     List<_BridgeMessageContent> contentFormatted = new ArrayList<>();
                     for (_BridgeMessageContent content : contents) {
                         contentFormatted.add(f.format(content));
                     }
                     contents = contentFormatted;
                     break;
+                } else {
+                    log.info("Inbound formatter {} did not match", f.getId());
                 }
             }
 
