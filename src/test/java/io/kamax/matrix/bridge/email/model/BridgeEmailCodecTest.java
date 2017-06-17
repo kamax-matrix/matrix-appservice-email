@@ -1,4 +1,4 @@
-package io.kamax.matrix.bridge.email.model;/*
+/*
  * matrix-appservice-email - Matrix Bridge to E-mail
  * Copyright (C) 2017 Maxime Dor
  *
@@ -17,6 +17,8 @@ package io.kamax.matrix.bridge.email.model;/*
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+package io.kamax.matrix.bridge.email.model;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
