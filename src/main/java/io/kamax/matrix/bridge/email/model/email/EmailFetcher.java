@@ -154,6 +154,8 @@ public class EmailFetcher implements _EmailFetcher, InitializingBean {
                     } catch (MessagingException e) {
                         log.error("Error in e-mail backend: {}", e.getMessage());
                         doDisconnect();
+                    } catch (Throwable t) {
+                        log.error("Error in e-mail fetcher", t);
                     }
                 }
 
