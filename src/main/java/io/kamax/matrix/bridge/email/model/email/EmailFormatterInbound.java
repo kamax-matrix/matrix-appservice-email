@@ -23,6 +23,9 @@ package io.kamax.matrix.bridge.email.model.email;
 import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
 import io.kamax.matrix.bridge.email.model.BridgeMessageTextContent;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.net.QuotedPrintableCodec;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,15 +69,29 @@ public class EmailFormatterInbound implements _EmailFormatterInbound {
             return extractContent((Part) p.getContent());
         }
 
-        List<_BridgeMessageContent> contents = new ArrayList<>();
+        String content = p.getContent().toString();
+        String[] encodings = p.getHeader("Content-Transfer-Encoding");
+        String encoding = (encodings != null && encodings.length > 0) ? encodings[0] : null;
+
+        if (StringUtils.equalsIgnoreCase("quoted-printable", encoding)) {
+            try {
+                // TODO actually extract the charset properly
+                // TODO read RFC to know default charset
+                log.info("Transfer encoding is {}, decoding", encoding);
+                content = new String(QuotedPrintableCodec.decodeQuotedPrintable(content.getBytes()));
+            } catch (DecoderException e) {
+                log.warn("Content transfer encoding is set to {} but enable to decode: {}", encoding, e.getMessage());
+            }
+        }
+
         if (p.isMimeType(MimeTypeUtils.TEXT_PLAIN_VALUE)) {
             log.info("Found plain text content");
-            return Collections.singletonList(new BridgeMessageTextContent((String) p.getContent()));
+            return Collections.singletonList(new BridgeMessageTextContent(content, encoding));
         }
 
         if (p.isMimeType(MimeTypeUtils.TEXT_HTML_VALUE)) {
             log.info("Found HTML content");
-            return Collections.singletonList(new BridgeMessageHtmlContent((String) p.getContent()));
+            return Collections.singletonList(new BridgeMessageHtmlContent(content, encoding));
         }
 
         return Collections.emptyList();

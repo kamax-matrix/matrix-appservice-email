@@ -20,11 +20,14 @@
 
 package io.kamax.matrix.bridge.email.model;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.nio.charset.StandardCharsets;
 
 public class BridgeMessageContent implements _BridgeMessageContent {
 
     private String mime;
+    private String encoding;
     private byte[] content;
 
     public BridgeMessageContent(String mime) {
@@ -32,13 +35,23 @@ public class BridgeMessageContent implements _BridgeMessageContent {
     }
 
     public BridgeMessageContent(String mime, byte[] content) {
+        this(mime, null, content);
+    }
+
+    public BridgeMessageContent(String mime, String encoding, byte[] content) {
         this.mime = mime;
+        this.encoding = StringUtils.defaultIfBlank(encoding, "");
         this.content = content;
     }
 
     @Override
     public String getMime() {
         return mime;
+    }
+
+    @Override
+    public String getEncoding() {
+        return encoding;
     }
 
     @Override
@@ -50,4 +63,5 @@ public class BridgeMessageContent implements _BridgeMessageContent {
     public String getContentAsString() {
         return new String(getContent(), StandardCharsets.UTF_8);
     }
+
 }

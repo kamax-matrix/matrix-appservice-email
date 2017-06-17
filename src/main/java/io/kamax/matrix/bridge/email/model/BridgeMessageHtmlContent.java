@@ -28,4 +28,8 @@ public class BridgeMessageHtmlContent extends BridgeMessageContent {
         super(MimeTypeUtils.TEXT_HTML_VALUE, content.getBytes());
     }
 
+    public BridgeMessageHtmlContent(String content, String encoding) {
+        super(MimeTypeUtils.TEXT_HTML_VALUE, encoding, content.getBytes());
+    }
+
 }

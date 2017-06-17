@@ -28,4 +28,8 @@ public class BridgeMessageTextContent extends BridgeMessageContent {
         super(MimeTypeUtils.TEXT_PLAIN_VALUE, content.getBytes());
     }
 
+    public BridgeMessageTextContent(String content, String encoding) {
+        super(MimeTypeUtils.TEXT_PLAIN_VALUE, encoding, content.getBytes());
+    }
+
 }

@@ -21,8 +21,6 @@
 package io.kamax.matrix.bridge.email.model.email;
 
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.net.QuotedPrintableCodec;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Element;
 import org.jsoup.safety.Whitelist;
@@ -32,7 +30,6 @@ import org.springframework.stereotype.Component;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -63,13 +60,6 @@ public class GmailClientFormatter extends AEmailClientFormatter {
 
     @Override
     protected String formatHtml(String content) {
-        try {
-            // TODO let's not assume the encoding
-            content = new String(QuotedPrintableCodec.decodeQuotedPrintable(content.getBytes()), StandardCharsets.UTF_8);
-        } catch (DecoderException e) {
-            log.warn("E-mail from Gmail was not quoted-printable codec, using raw HTML instead");
-        }
-
         Element body = Jsoup.parse(content).body();
         Element contentDiv = body.select("div[dir='ltr']").first();
         if (contentDiv == null) {
