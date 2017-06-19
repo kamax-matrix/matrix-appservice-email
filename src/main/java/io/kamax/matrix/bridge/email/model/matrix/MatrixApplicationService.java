@@ -21,6 +21,7 @@
 package io.kamax.matrix.bridge.email.model.matrix;
 
 import io.kamax.matrix.*;
+import io.kamax.matrix.bridge.email.config.bridge.BridgeInviteConfig;
 import io.kamax.matrix.bridge.email.config.matrix.HomeserverConfig;
 import io.kamax.matrix.bridge.email.config.matrix.IdentityConfig;
 import io.kamax.matrix.bridge.email.exception.*;
@@ -53,6 +54,9 @@ public class MatrixApplicationService implements _MatrixApplicationService {
 
     @Autowired
     private IdentityConfig isCfg;
+
+    @Autowired
+    private BridgeInviteConfig bInvCfg;
 
     @Autowired
     private BridgeEmailCodec emailCodec;
@@ -208,6 +212,12 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             if (!ev.getInvitee().isValid()) {
                 log.warn("{} is not a valid MXID, declining invite", ev.getInvitee());
 
+                room.leave();
+                return;
+            }
+
+            if (!bInvCfg.getDomain().isEmpty() && !bInvCfg.getDomain().contains(ev.getSender().getDomain())) {
+                log.info("{} is not part of allowed domains, rejecting invite", ev.getSender());
                 room.leave();
                 return;
             }
