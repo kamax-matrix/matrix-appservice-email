@@ -152,8 +152,14 @@ public class MatrixApplicationService implements _MatrixApplicationService {
     private void pushMessageEvent(_RoomMessageEvent ev) {
         log.info("We got message event {} in {}", ev.getType(), ev.getRoomId());
 
-        if ("m.notice".contentEquals(ev.getBodyType())) {
+        if (StringUtils.isBlank(ev.getBodyType())) {
+            log.warn("Possibly invalid message type. Transaction info: {}", ev);
+            return;
+        }
+
+        if (StringUtils.equals("m.notice", ev.getBodyType())) {
             log.info("Ignoring event with body type {}", ev.getBodyType());
+            return;
         }
 
         log.info("Computing forward list");
