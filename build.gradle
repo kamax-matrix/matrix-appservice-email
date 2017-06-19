@@ -61,6 +61,15 @@ dependencies {
     testCompile 'org.springframework.boot:spring-boot-starter-test'
 }
 
+springBoot {
+    executable = true
+
+    embeddedLaunchScriptProperties = [
+            confFolder: "/etc/default"
+    ]
+}
+
+
 task buildBin(type: Copy, dependsOn: ['build']) {
     from jar
     into distBinDir
