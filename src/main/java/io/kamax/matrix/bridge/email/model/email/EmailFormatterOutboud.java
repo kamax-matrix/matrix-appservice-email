@@ -25,12 +25,12 @@ import io.kamax.matrix._MatrixContent;
 import io.kamax.matrix._MatrixUser;
 import io.kamax.matrix.bridge.email.config.email.EmailReceiverConfig;
 import io.kamax.matrix.bridge.email.config.email.EmailSenderConfig;
-import io.kamax.matrix.bridge.email.config.subscription.SubscriptionPortalConfig;
 import io.kamax.matrix.bridge.email.model.BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.BridgeMessageHtmlContent;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
 import io.kamax.matrix.bridge.email.model.subscription.SubscriptionEvents;
+import io.kamax.matrix.bridge.email.model.subscription.SubscriptionPortalService;
 import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import io.kamax.matrix.client._MatrixClient;
@@ -71,7 +71,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     private EmailReceiverConfig recvCfg;
 
     @Autowired
-    private SubscriptionPortalConfig portalCfg;
+    private SubscriptionPortalService portalSvc;
 
     @Autowired
     private _EmailTemplateManager templateMgr;
@@ -92,7 +92,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
     }
 
     private String getSubscriptionManageLink(String token) {
-        return portalCfg.getUrl().toExternalForm() + "/subscription?token=" + token;
+        return portalSvc.getPublicLink(token);
     }
 
     private String getHtml(String text) {

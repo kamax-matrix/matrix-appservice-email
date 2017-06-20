@@ -21,6 +21,7 @@
 package io.kamax.matrix.bridge.email.controller;
 
 import io.kamax.matrix.bridge.email.exception.InvalidEmailKeyException;
+import io.kamax.matrix.bridge.email.model.subscription.SubscriptionPortalService;
 import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionManager;
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public class SubscriptionController {
         return "subscription/invalidToken";
     }
 
-    @RequestMapping(value = "/subscription", method = GET)
+    @RequestMapping(value = SubscriptionPortalService.BASE_PATH, method = GET)
     public String listSubscriptions(Model model, @RequestParam String token) {
         log.info("Subscription list request");
 
@@ -78,7 +79,7 @@ public class SubscriptionController {
         return "subscription/list";
     }
 
-    @RequestMapping(value = "/subscription/remove", method = GET)
+    @RequestMapping(value = SubscriptionPortalService.BASE_PATH + "/remove", method = GET)
     public String delete(Model model, @RequestParam String token) {
         log.info("Subscription {} remove request", token);
 

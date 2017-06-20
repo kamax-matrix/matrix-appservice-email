@@ -27,6 +27,7 @@ import io.kamax.matrix.bridge.email.config.matrix.HomeserverConfig;
 import io.kamax.matrix.bridge.email.config.subscription.MatrixNotificationConfig;
 import io.kamax.matrix.bridge.email.model.BridgeEmailCodec;
 import io.kamax.matrix.bridge.email.model._EndPoint;
+import io.kamax.matrix.bridge.email.model.subscription.SubscriptionPortalService;
 import io.kamax.matrix.client._MatrixClient;
 import io.kamax.matrix.client.as.MatrixApplicationServiceClient;
 import io.kamax.matrix.client.as._MatrixApplicationServiceClient;
@@ -55,6 +56,9 @@ public class MatrixManager implements _MatrixManager, InitializingBean {
 
     @Autowired
     private BridgeEmailCodec emailCodec;
+
+    @Autowired
+    private SubscriptionPortalService portalSvc;
 
     private _MatrixApplicationServiceClient mgr;
 
@@ -113,7 +117,7 @@ public class MatrixManager implements _MatrixManager, InitializingBean {
 
     private MatrixEndPoint createEndpoint(_MatrixClient client, String roomId) {
         String id = getKey(client.getUser().getId(), roomId);
-        MatrixEndPoint ep = new MatrixEndPoint(id, client, roomId, notifCfg);
+        MatrixEndPoint ep = new MatrixEndPoint(id, client, roomId, notifCfg, portalSvc);
         ep.addStateListener(this::destroyEndpoint);
         endpoints.put(id, ep);
         return ep;

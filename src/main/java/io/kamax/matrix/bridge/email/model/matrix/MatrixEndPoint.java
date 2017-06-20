@@ -25,6 +25,7 @@ import io.kamax.matrix.bridge.email.config.subscription.MatrixNotificationConfig
 import io.kamax.matrix.bridge.email.model.AEndPoint;
 import io.kamax.matrix.bridge.email.model._BridgeMessageContent;
 import io.kamax.matrix.bridge.email.model.email._EmailBridgeMessage;
+import io.kamax.matrix.bridge.email.model.subscription.SubscriptionPortalService;
 import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import io.kamax.matrix.client._MatrixClient;
@@ -41,11 +42,13 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
 
     private _MatrixClient client;
     private MatrixNotificationConfig notifCfg;
+    private SubscriptionPortalService portalSvc; // TODO this is very hacky, do it another way
 
-    public MatrixEndPoint(String id, _MatrixClient client, String roomId, MatrixNotificationConfig notifCfg) {
+    public MatrixEndPoint(String id, _MatrixClient client, String roomId, MatrixNotificationConfig notifCfg, SubscriptionPortalService portalSvc) {
         super(id, client.getUser(), roomId);
         this.client = client;
         this.notifCfg = notifCfg;
+        this.portalSvc = portalSvc;
     }
 
     @Override
@@ -80,10 +83,13 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
 
         if (html.isPresent() && txt.isPresent()) {
             log.info("Forwarding e-mail {} to Matrix from {} with formatted content", msg.getKey(), msg.getSender());
-            client.getRoom(getChannelId()).sendFormattedText(html.get().getContentAsString(), txt.get().getContentAsString());
+            String contentHtml = portalSvc.redactToken(html.get().getContentAsString());
+            String contentText = portalSvc.redactToken(txt.get().getContentAsString());
+            client.getRoom(getChannelId()).sendFormattedText(contentHtml, contentText);
         } else {
             log.info("Forwarding e-mail {} to Matrix from {} with plain content", msg.getKey(), msg.getSender());
-            client.getRoom(getChannelId()).sendText(txt.get().getContentAsString());
+            String contentText = portalSvc.redactToken(txt.get().getContentAsString());
+            client.getRoom(getChannelId()).sendText(contentText);
         }
     }
 
