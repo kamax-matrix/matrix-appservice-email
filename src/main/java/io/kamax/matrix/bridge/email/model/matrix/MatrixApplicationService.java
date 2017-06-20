@@ -166,21 +166,21 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             return;
         }
 
-        log.info("Computing forward list");
-        log.info("Listing users in the room {}", ev.getRoomId());
+        log.debug("Computing forward list");
+        log.debug("Listing users in the room {}", ev.getRoomId());
         List<_MatrixID> users = mgr.getClient().getRoom(ev.getRoomId()).getJoinedUsers();
         for (_MatrixID user : users) {
             if (!mgr.isOurUser(user)) {
-                log.info("{} is not a bridged user, skipping", user);
+                log.debug("{} is not a bridged user, skipping", user);
                 continue;
             }
 
             if (user.equals(ev.getSender())) {
-                log.info("{} is the original sender of the event, skipping", user);
+                log.debug("{} is the original sender of the event, skipping", user);
                 continue;
             }
 
-            log.info("{} is a valid potential bridge user", user);
+            log.debug("{} is a valid potential bridge user", user);
             Optional<_MatrixBridgeUser> userOpt = mgr.findClientForUser(user);
             if (!userOpt.isPresent()) {
                 log.warn("No Matrix client for MXID {} while present in the room", user);
