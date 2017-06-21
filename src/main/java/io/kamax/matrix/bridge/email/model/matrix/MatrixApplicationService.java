@@ -21,6 +21,7 @@
 package io.kamax.matrix.bridge.email.model.matrix;
 
 import io.kamax.matrix.*;
+import io.kamax.matrix.bridge.email.config.bridge.BridgeCommandConfig;
 import io.kamax.matrix.bridge.email.config.bridge.BridgeInviteConfig;
 import io.kamax.matrix.bridge.email.config.matrix.HomeserverConfig;
 import io.kamax.matrix.bridge.email.config.matrix.IdentityConfig;
@@ -41,8 +42,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 public class MatrixApplicationService implements _MatrixApplicationService {
@@ -59,6 +63,9 @@ public class MatrixApplicationService implements _MatrixApplicationService {
     private BridgeInviteConfig bInvCfg;
 
     @Autowired
+    private BridgeCommandConfig bCmdCfg;
+
+    @Autowired
     private BridgeEmailCodec emailCodec;
 
     @Autowired
@@ -66,6 +73,8 @@ public class MatrixApplicationService implements _MatrixApplicationService {
 
     @Autowired
     private _SubscriptionManager subMgr;
+
+    private Pattern cmdOptsParser = Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
 
     private String lastTransactionId;
 
@@ -106,8 +115,11 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             return Optional.empty();
         }
 
-        String localpart = encode(isCfg.getTemplate(), threePid.getAddress());
-        return Optional.of(new ThreePidMapping(threePid, new MatrixID(localpart, isCfg.getDomain())));
+        return Optional.of(new ThreePidMapping(threePid, getMatrixId(threePid.getAddress())));
+    }
+
+    private _MatrixID getMatrixId(String email) {
+        return new MatrixID(encode(isCfg.getTemplate(), email), isCfg.getDomain());
     }
 
     @Override
@@ -166,43 +178,57 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             return;
         }
 
-        log.debug("Computing forward list");
-        log.debug("Listing users in the room {}", ev.getRoomId());
-        List<_MatrixID> users = mgr.getClient().getRoom(ev.getRoomId()).getJoinedUsers();
-        for (_MatrixID user : users) {
-            if (!mgr.isOurUser(user)) {
-                log.debug("{} is not a bridged user, skipping", user);
-                continue;
-            }
+        if (ev.getBody().startsWith(bCmdCfg.getKeyword() + " ")) {
+            handleCommand(ev, mgr.getClient());
+        } else {
+            log.debug("Computing forward list");
+            log.debug("Listing users in the room {}", ev.getRoomId());
+            List<_MatrixID> users = mgr.getClient().getRoom(ev.getRoomId()).getJoinedUsers();
+            for (_MatrixID user : users) {
+                if (!mgr.isOurUser(user)) {
+                    log.debug("{} is not a bridged user, skipping", user);
+                    continue;
+                }
 
-            if (user.equals(ev.getSender())) {
-                log.debug("{} is the original sender of the event, skipping", user);
-                continue;
-            }
+                if (user.equals(ev.getSender())) {
+                    log.debug("{} is the original sender of the event, skipping", user);
+                    continue;
+                }
 
-            log.debug("{} is a valid potential bridge user", user);
-            Optional<_MatrixBridgeUser> userOpt = mgr.findClientForUser(user);
-            if (!userOpt.isPresent()) {
-                log.warn("No Matrix client for MXID {} while present in the room", user);
-                continue;
-            }
+                log.debug("{} is a valid potential bridge user", user);
+                Optional<_MatrixBridgeUser> userOpt = mgr.findClientForUser(user);
+                if (!userOpt.isPresent()) {
+                    log.warn("No Matrix client for MXID {} while present in the room", user);
+                    continue;
+                }
 
-            MatrixEndPoint ep = mgr.getEndpoint(user.getId(), ev.getRoomId());
-            log.info("Injecting message {} from room {} to {}", ev.getId(), ev.getRoomId(), user);
-            ep.inject(new MatrixBridgeMessage(ev.getId(), ev.getTime(), mgr.getClient().getUser(ev.getSender()), ev.getBody()));
+                MatrixEndPoint ep = mgr.getEndpoint(user.getId(), ev.getRoomId());
+                log.info("Injecting message {} from room {} to {}", ev.getId(), ev.getRoomId(), user);
+                ep.inject(new MatrixBridgeMessage(ev.getId(), ev.getTime(), mgr.getClient().getUser(ev.getSender()), ev.getBody()));
+            }
         }
     }
 
     private void pushMembershipEvent(_RoomMembershipEvent ev) {
         log.info("We got membership event {} for {}", ev.getMembership(), ev.getInvitee());
 
-        Optional<_MatrixBridgeUser> clientOpt = mgr.findClientForUser(ev.getInvitee());
-        if (!clientOpt.isPresent()) {
-            log.info("Event is not for us, skipping");
-            return;
-        }
+        if (mgr.getClient().getUser().equals(ev.getInvitee())) {
+            if (RoomMembership.Invite.is(ev.getMembership())) {
+                _MatrixRoom room = mgr.getClient().getRoom(ev.getRoomId());
+                log.info("Joining room {} as AS user", room.getAddress());
+                room.join();
+            } else {
+                log.debug("Ignoring room {} membership {} for AS user", ev.getRoomId(), ev.getMembership());
+            }
+        } else {
+            Optional<_MatrixBridgeUser> clientOpt = mgr.findClientForUser(ev.getInvitee());
+            if (!clientOpt.isPresent()) {
+                log.info("Event is not for us, skipping");
+                return;
+            }
 
-        handleMembershipEvent(clientOpt.get(), ev);
+            handleMembershipEvent(clientOpt.get(), ev);
+        }
     }
 
     private void handleMembershipEvent(_MatrixBridgeUser user, _RoomMembershipEvent ev) {
@@ -263,6 +289,41 @@ public class MatrixApplicationService implements _MatrixApplicationService {
                 } else {
                     log.info("Subscription was already removed, skipping");
                 }
+            }
+        }
+    }
+
+    private void showHelp(_MatrixRoom room) {
+        room.sendNotice(bCmdCfg.getKeyword() + " mxisd <email>\t\tTranslate an e-mail into a Matrix ID");
+    }
+
+    // TODO turn commands into objects to make this more efficient and extendible
+    private void handleCommand(_RoomMessageEvent ev, _MatrixApplicationServiceClient client) {
+        List<String> opts = new ArrayList<>();
+        Matcher m = cmdOptsParser.matcher(ev.getBody());
+        while (m.find()) {
+            opts.add(m.group(1));
+        }
+
+        _MatrixRoom room = client.getRoom(ev.getRoomId());
+        if (opts.size() < 2) {
+            showHelp(room);
+        } else {
+            switch (opts.get(1)) {
+                case "mxid":
+                    if (opts.size() != 3) {
+                        showHelp(room);
+                    } else {
+                        String email = opts.get(2);
+                        String mxid = getMatrixId(email).getId();
+                        String plain = "MXID for " + email + " :   " + mxid;
+                        String formatted = "MXID for " + email + ":<pre><code>" + mxid + "</code></pre>";
+                        room.sendNotice(formatted, plain);
+                    }
+
+                    break;
+                default:
+                    showHelp(room);
             }
         }
     }

@@ -234,6 +234,11 @@ subscription:
 
 # Bridge configuration
 bridge:
+
+  command:
+    # Keyword trigger used to send command to the AS via Matrix, in rooms where the AS user is present
+    keyword: "!email"
+
   invite:
     # List of Matrix user domains which are allowed to invite virtual users within a room.
     # This is useful to prevent federated invite and control spam so only users of given HS can create new subscriptions.
@@ -241,6 +246,7 @@ bridge:
 
 # Logging configuration
 logging:
+
   # Change the log location to whatever you want here. Leave empty or comment out to disable
   file: "mxasd-email.log"
   level:
