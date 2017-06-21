@@ -2,6 +2,15 @@ Matrix <--> E-mail bridge
 -------------------------
 [![Build Status](https://travis-ci.org/kamax-io/matrix-appservice-email.svg?branch=master)](https://travis-ci.org/kamax-io/matrix-appservice-email)
 
+[Features](#features)  
+[Overview](#overview)  
+[Requirements](#requirements)  
+[Setup](#setup)  
+[Integration](#integration)
+[Usage](#usage)
+
+---
+
 This is an E-mail bridge for Matrix using the Application Services (AS) API.
 
 This bridge will pass all Matrix messages from rooms where E-mail virtual users are invited via E-mail, and all E-mail
@@ -42,10 +51,8 @@ You will require Java 1.8 or higher to compile and run this bridge.
 2. [Configure the bridge](#configure)
 3. [Run the bridge](#run) manually or via Docker
 4. [Configure your HS](#homeserver) to read the bridge registration file
-5. [Install and Configure mxisd](#mxisd) to use this bridge for unknown 3PID lookup
-7. Configure your Matrix client to use mxisd as the Identity Server
-8. Invite someone to a room with an e-mail which has no 3PID mapping
-9. Start chatting!
+5. [See Usage instructions](#usage) to see how to interact with the bridge
+6. Start chatting!
 
 ## Build
 Checkout the repo and initialize the submodules
@@ -126,3 +133,30 @@ lookup:
       mappings:
         email: 'http://localhost:8091'
 ```
+
+# Usage
+## Via Identity Server
+1. [Install and Configure mxisd](#mxisd) to use this bridge for unknown 3PID lookup
+2. Configure your Matrix client to use mxisd as the Identity Server
+3. Invite someone to a room with an e-mail which has no 3PID mapping. In Riot, use "Invite to this room" feature.
+
+## Manual
+1. Invite the AS user to a new chat or in an existing room (replace the Matrix ID to the appropriate value):
+```
+/invite @appservice-email:localhost`
+```
+
+2. Send the command into the room/chat to get the Matrix ID for a given e-mail (replace with appropriate value):
+```
+!email mxid john.doe@example.org
+```
+You should get an answer from the AS user, which will look like this:
+```
+MXID for john.doe@example.org:
+
+   @email_john.doe=40example.org:localhost
+```
+
+3. Use the given MAtrix ID  to invite the Bridge user into a room or chat.
+4. The E-mail user will receive a notification of the next conversation.
+5. Start chatting!
