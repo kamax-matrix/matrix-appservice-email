@@ -143,7 +143,7 @@ lookup:
 ## Manual
 1. Invite the AS user to a new chat or in an existing room (replace the Matrix ID to the appropriate value):
 ```
-/invite @appservice-email:localhost`
+/invite @appservice-email:localhost
 ```
 
 2. Send the command into the room/chat to get the Matrix ID for a given e-mail (replace with appropriate value):
