@@ -23,6 +23,8 @@ package io.kamax.matrix.bridge.email.model.subscription;
 import io.kamax.matrix.bridge.email.model.email._EmailEndPoint;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixEndPoint;
 
+import java.time.Instant;
+
 public interface _BridgeSubscription {
 
     String getId();
@@ -33,6 +35,8 @@ public interface _BridgeSubscription {
      * @return Matrix ID of the initiator
      */
     String getInitiator();
+
+    Instant getCreation();
 
     String getEmailKey();
 

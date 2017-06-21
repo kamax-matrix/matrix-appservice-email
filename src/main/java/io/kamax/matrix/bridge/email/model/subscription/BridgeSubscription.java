@@ -69,6 +69,11 @@ public class BridgeSubscription implements _BridgeSubscription {
     }
 
     @Override
+    public Instant getCreation() {
+        return timestamp;
+    }
+
+    @Override
     public String getEmailKey() {
         return emKey;
     }

@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -248,7 +249,7 @@ public class MatrixApplicationService implements _MatrixApplicationService {
                 return;
             }
 
-            _BridgeSubscription sub = subMgr.create(ev.getSender(), ev.getTime(), user, ev.getRoomId());
+            _BridgeSubscription sub = subMgr.create(ev.getSender(), Instant.now(), user, ev.getRoomId());
             log.info("Subscription | Matrix key: {} | Email key: {}", sub.getMatrixKey(), sub.getEmailKey());
 
             log.info("Joining room {} on {} as {}", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
