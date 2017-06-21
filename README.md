@@ -6,7 +6,7 @@ Matrix <--> E-mail bridge
 [Overview](#overview)  
 [Requirements](#requirements)  
 [Setup](#setup)  
-[Integration](#integration)
+[Integration](#integration)  
 [Usage](#usage)
 
 ---
