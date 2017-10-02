@@ -43,9 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,7 +75,16 @@ public class MatrixApplicationService implements _MatrixApplicationService {
 
     private Pattern cmdOptsParser = Pattern.compile("([^\"]\\S*|\".+?\")\\s*");
 
+    private Map<String, List<_MatrixID>> memberships = new HashMap<>();
     private String lastTransactionId;
+
+    private synchronized List<_MatrixID> getJoinedUsers(String roomId) {
+        return memberships.computeIfAbsent(roomId, s -> mgr.getClient().getRoom(s).getJoinedUsers());
+    }
+
+    private synchronized void expireUsers(String roomId) {
+        memberships.remove(roomId);
+    }
 
     private _MatrixApplicationServiceClient validateCredentials(AHomeserverCall call) {
         if (StringUtils.isEmpty(call.getCredentials())) {
@@ -184,7 +191,7 @@ public class MatrixApplicationService implements _MatrixApplicationService {
         } else {
             log.debug("Computing forward list");
             log.debug("Listing users in the room {}", ev.getRoomId());
-            List<_MatrixID> users = mgr.getClient().getRoom(ev.getRoomId()).getJoinedUsers();
+            List<_MatrixID> users = getJoinedUsers(ev.getRoomId());
             for (_MatrixID user : users) {
                 if (!mgr.isOurUser(user)) {
                     log.debug("{} is not a bridged user, skipping", user);
@@ -229,6 +236,7 @@ public class MatrixApplicationService implements _MatrixApplicationService {
             }
 
             handleMembershipEvent(clientOpt.get(), ev);
+            expireUsers(ev.getRoomId());
         }
     }
 
