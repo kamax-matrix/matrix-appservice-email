@@ -30,6 +30,7 @@ import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
 import io.kamax.matrix.client._MatrixClient;
 import io.kamax.matrix.hs._MatrixRoom;
+import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.MimeTypeUtils;
@@ -87,9 +88,21 @@ public class MatrixEndPoint extends AEndPoint<_MatrixID, _EmailBridgeMessage, _M
             String contentText = portalSvc.redactToken(txt.get().getContentAsString());
             client.getRoom(getChannelId()).sendFormattedText(contentHtml, contentText);
         } else {
-            log.info("Forwarding e-mail {} to Matrix from {} with plain content", msg.getKey(), msg.getSender());
-            String contentText = portalSvc.redactToken(txt.get().getContentAsString());
-            client.getRoom(getChannelId()).sendText(contentText);
+            txt.ifPresent(content -> {
+                log.info("Forwarding e-mail {} to Matrix from {} with only plain text content", msg.getKey(), msg.getSender());
+                String contentText = portalSvc.redactToken(content.getContentAsString());
+                client.getRoom(getChannelId()).sendText(contentText);
+            });
+
+            html.ifPresent(content -> {
+                log.info("Forwarding e-mail {} to Matrix from {} with only HTML content", msg.getKey(), msg.getSender());
+                String contentHtml = portalSvc.redactToken(content.getContentAsString());
+                try {
+                    client.getRoom(getChannelId()).sendText(Jsoup.parse(contentHtml).text());
+                } catch (RuntimeException e) {
+                    log.warn("Unable to clean up HTML content, skipping", e);
+                }
+            });
         }
     }
 
