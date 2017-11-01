@@ -29,6 +29,7 @@ import io.kamax.matrix.bridge.email.exception.*;
 import io.kamax.matrix.bridge.email.model.BridgeEmailCodec;
 import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionManager;
+import io.kamax.matrix.client.MatrixClientRequestException;
 import io.kamax.matrix.client._MatrixClient;
 import io.kamax.matrix.client.as._MatrixApplicationServiceClient;
 import io.kamax.matrix.event._MatrixEvent;
@@ -262,7 +263,17 @@ public class MatrixApplicationService implements _MatrixApplicationService {
 
             log.info("Joining room {} on {} as {}", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
 
-            room.join();
+            try {
+                room.join();
+            } catch (MatrixClientRequestException e) {
+                log.error("Failed to join room {} on {} as {}, rejecting invite", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
+                sub.terminate();
+                try {
+                    room.leave();
+                } catch (MatrixClientRequestException e1) {
+                    log.warn("Failure to reject invite for room {} on {} as {}", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
+                }
+            }
         }
 
         if (RoomMembership.Join.is(ev.getMembership())) {
