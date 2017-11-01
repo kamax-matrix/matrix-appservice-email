@@ -258,21 +258,21 @@ public class MatrixApplicationService implements _MatrixApplicationService {
                 return;
             }
 
-            _BridgeSubscription sub = subMgr.create(ev.getSender(), Instant.now(), user, ev.getRoomId());
-            log.info("Subscription | Matrix key: {} | Email key: {}", sub.getMatrixKey(), sub.getEmailKey());
-
             log.info("Joining room {} on {} as {}", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
-
             try {
                 room.join();
+                log.info("Joined room {} on {} as {}", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
+
+                try {
+                    _BridgeSubscription sub = subMgr.create(ev.getSender(), Instant.now(), user, ev.getRoomId());
+                    log.info("Subscription | Matrix key: {} | Email key: {}", sub.getMatrixKey(), sub.getEmailKey());
+                } catch (RuntimeException e) {
+                    log.error("Failed to create subscription for room {} on {} as {}, leaving", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
+                    room.leave();
+                }
             } catch (MatrixClientRequestException e) {
                 log.error("Failed to join room {} on {} as {}, rejecting invite", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
-                sub.terminate();
-                try {
-                    room.leave();
-                } catch (MatrixClientRequestException e1) {
-                    log.warn("Failure to reject invite for room {} on {} as {}", ev.getRoomId(), hsCfg.getDomain(), ev.getInvitee());
-                }
+                room.leave();
             }
         }
 
