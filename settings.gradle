@@ -19,6 +19,3 @@
  */
 
 rootProject.name = 'matrix-appservice-email'
-
-include 'external/sdk'
-project(':external/sdk').name = 'matrix-java-sdk'

@@ -1,3 +1,0 @@
-[submodule "external/sdk"]
-	path = external/sdk
-	url = https://github.com/kamax-io/matrix-java-sdk.git
