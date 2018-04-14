@@ -26,6 +26,7 @@ import io.kamax.matrix.bridge.email.model.AEndPoint;
 import io.kamax.matrix.bridge.email.model.matrix._MatrixBridgeMessage;
 import io.kamax.matrix.bridge.email.model.subscription._BridgeSubscription;
 import io.kamax.matrix.bridge.email.model.subscription._SubscriptionEvent;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +35,7 @@ import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.ParseException;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Optional;
@@ -74,8 +76,17 @@ public class EmailEndPoint extends AEndPoint<String, _MatrixBridgeMessage, _Emai
 
         try {
             transport.sendMessage(msg, InternetAddress.parse(getIdentity()));
+        } catch (ParseException e) {
+            try {
+                log.error("Invalid content in email");
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                msg.writeTo(out);
+                log.info("Email dump:\n{}", out.toString());
+            } catch (IOException e1) {
+                log.error("Impossible exception - REPORT!", e1);
+            }
         } catch (MessagingException e) {
-            log.error("mmm", e);
+            log.error("Error when sending email to {}", getIdentity(), e);
         } finally {
             transport.close();
         }
