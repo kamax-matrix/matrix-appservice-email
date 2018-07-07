@@ -78,7 +78,7 @@ public class EmailEndPoint extends AEndPoint<String, _MatrixBridgeMessage, _Emai
             transport.sendMessage(msg, InternetAddress.parse(getIdentity()));
         } catch (ParseException e) {
             try {
-                log.error("Invalid content in email");
+                log.error("Invalid content in email: {}", e.getMessage());
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 msg.writeTo(out);
                 log.info("Email dump:\n{}", out.toString());
