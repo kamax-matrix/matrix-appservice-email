@@ -22,7 +22,7 @@ apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'docker'
 
-group = 'kamax.io'
+group = 'kamax'
 
 def configFile = "src/main/resources/application.yaml"
 def distBinDir = "${project.buildDir.absolutePath}/dist/bin"

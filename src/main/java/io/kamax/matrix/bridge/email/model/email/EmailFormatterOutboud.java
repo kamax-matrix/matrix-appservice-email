@@ -173,13 +173,14 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
 
                 MimeBodyPart avatarBp = new MimeBodyPart();
                 _MatrixContent avatar = data.getSenderAvatar();
-                String filename = avatar.getFilename().orElse("unknown." + avatar.getType()
-                        .replace("image/", ""))
-                        .replace("\"", "");
+                String filename = avatar.getFilename()
+                        .map(f -> f.replace("image/", "").replace("\"", ""))
+                        .filter(StringUtils::isNotBlank)
+                        .orElseGet(() -> "unknown." + avatar.getType());
 
                 avatarBp.setContent(avatar.getData(), avatar.getType());
                 avatarBp.setContentID("<" + senderAvatarId + ">");
-                avatarBp.setDisposition("inline; filename=" + filename + "; size=" + avatar.getData().length + ";");
+                avatarBp.setDisposition("inline; filename=\"" + filename + "\"; size=" + avatar.getData().length + ";");
 
                 contentBody.addBodyPart(avatarBp);
             }
