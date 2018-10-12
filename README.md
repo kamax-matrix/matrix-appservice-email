@@ -1,6 +1,6 @@
 Matrix <--> E-mail bridge
 -------------------------
-[![Build Status](https://travis-ci.org/kamax-io/matrix-appservice-email.svg?branch=master)](https://travis-ci.org/kamax-io/matrix-appservice-email)
+[![Build Status](https://travis-ci.org/kamax-matrix/matrix-appservice-email.svg?branch=master)](https://travis-ci.org/kamax-matrix/matrix-appservice-email)
 
 [Features](#features)  
 [Overview](#overview)  
@@ -57,7 +57,7 @@ You will require Java 1.8 or higher to compile and run this bridge.
 ## Build
 Checkout the repo and initialize the submodules
 ```
-git clone https://github.com/kamax-io/matrix-appservice-email.git
+git clone https://github.com/kamax-matrix/matrix-appservice-email.git
 cd matrix-appservice-email
 git submodule update --init
 ```
@@ -122,7 +122,7 @@ app_service_config_files:
 ```
 
 ## mxisd
-Follow instructions on the [git repo README](https://github.com/kamax-io/mxisd/blob/master/README.md) until you have a working setup.
+Follow instructions on the [git repo README](https://github.com/kamax-matrix/mxisd/blob/master/README.md) until you have a working setup.
 
 Add/edit the following sections in the mxisd configuration file, adapt the AS URL, and restart if needed:
 ```

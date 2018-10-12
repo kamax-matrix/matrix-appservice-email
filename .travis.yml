@@ -2,6 +2,3 @@ language: java
 
 jdk:
   - oraclejdk8
-
-install:
-  - git clone https://github.com/kamax-io/matrix-java-sdk.git ../matrix-java-sdk
