@@ -241,7 +241,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
         // TODO refactor with duplicated code within get()
         _MatrixClient mxClient = sub.getMatrixEndpoint().getClient();
         _MatrixUser userSource = msg.getSender();
-        Optional<_MatrixContent> userAvatar = userSource.getAvatar();
+        Optional<_MatrixContent> userAvatar = userSource.getAvatarThumbnail(48, 48);
         LocalDateTime ldt = LocalDateTime.ofInstant(msg.getTime(), ZoneOffset.systemDefault());
         TokenData tokenData = new TokenData(sub.getEmailEndpoint().getChannelId());
         tokenData.setManageUrl(getSubscriptionManageLink(sub.getEmailEndpoint().getChannelId()));
@@ -278,7 +278,7 @@ public class EmailFormatterOutboud implements InitializingBean, _EmailFormatterO
 
         _MatrixClient mxClient = ev.getSubscription().getMatrixEndpoint().getClient();
         _MatrixUser userSource = mxClient.getUser(new MatrixID(ev.getInitiator()));
-        Optional<_MatrixContent> userAvatar = userSource.getAvatar();
+        Optional<_MatrixContent> userAvatar = userSource.getAvatarThumbnail(48, 48);
         LocalDateTime ldt = LocalDateTime.ofInstant(ev.getTime(), ZoneOffset.systemDefault());
         TokenData tokenData = new TokenData(ev.getSubscription().getEmailEndpoint().getChannelId());
         tokenData.setManageUrl(getSubscriptionManageLink(ev.getSubscription().getEmailEndpoint().getChannelId()));
