@@ -57,6 +57,7 @@ public class EmailManager implements InitializingBean, _EmailManager {
             Optional<_EmailBridgeMessage> msgOpt = formatIn.get(key, email);
             if (!msgOpt.isPresent()) {
                 log.info("Inbound formatter did not return anything, skipping");
+                return;
             }
             _EmailBridgeMessage msg = msgOpt.get();
 
