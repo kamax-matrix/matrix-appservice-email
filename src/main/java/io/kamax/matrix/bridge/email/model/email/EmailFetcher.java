@@ -156,6 +156,12 @@ public class EmailFetcher implements _EmailFetcher, InitializingBean {
                         doDisconnect();
                     } catch (Throwable t) {
                         log.error("Error in e-mail fetcher", t);
+
+                        try {
+                            Thread.sleep(5000);
+                        } catch (InterruptedException e) {
+                            log.debug("Got interrupted while waiting with error back-off");
+                        }
                     }
                 }
 
