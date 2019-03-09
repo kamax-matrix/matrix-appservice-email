@@ -38,10 +38,7 @@ import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.internet.InternetAddress;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Component
 public class EmailFormatterInbound implements _EmailFormatterInbound {
@@ -102,6 +99,13 @@ public class EmailFormatterInbound implements _EmailFormatterInbound {
         try {
             String sender = ((InternetAddress) msg.getFrom()[0]).getAddress(); // TODO sanitize properly
             log.info("Email is from {}", sender);
+
+            if (Objects.isNull(msg.getSentDate())) {
+                // As per https://tools.ietf.org/html/rfc5322#page-19
+                log.warn("Email is illegal, Date info missing. Skipping");
+                return Optional.empty();
+            }
+
             List<_BridgeMessageContent> contents = extractContent(msg);
             if (contents.isEmpty()) {
                 log.warn("Found no valid content, skipping");
