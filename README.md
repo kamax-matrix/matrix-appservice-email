@@ -11,16 +11,17 @@ Matrix <--> E-mail bridge
 
 ---
 
+**This project is no longer maintained.**
+
+---
+
 This is an E-mail bridge for Matrix using the Application Services (AS) API.
 
 This bridge will pass all Matrix messages from rooms where E-mail virtual users are invited via E-mail, and all E-mail
 messages into the corresponding Matrix room.
 
-This software is currently in alpha phase and is not ready for production: Your feedback and ideas are extremely welcome!  
-Please help us by opening an issue or joining us on Matrix at
-[#mxasd-email:kamax.io](https://matrix.to/#/#mxasd-email:kamax.io)
-
 # Features
+
 - Matrix to E-mail forwarding
 - E-mail to Matrix forwarding
 - E-mail <-> Matrix <-> E-mail forwarding, if several bridge users are present within a room
